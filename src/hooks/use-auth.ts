@@ -9,11 +9,11 @@ export interface AuthUserState {
   name: string;
   picture?: string;
   isMockUser?: boolean;
+  isAdmin?: boolean;
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<AuthUserState | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<AuthUserState | null>(null);  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const router = useRouter();
 

@@ -1,5 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { validateCollegeEmail, ALLOWED_DOMAIN } from '@/lib/security/domain-validator';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { validateCollegeEmail, getAllowedDomain } from '@/lib/security/domain-validator';
+
+// Unit tests must not depend on a real .env file: the domain under test is
+// injected explicitly, exactly as production injects it via ALLOWED_EMAIL_DOMAIN.
+const TEST_DOMAIN = 'saitm.ac.in';
+
+beforeAll(() => {
+  process.env.ALLOWED_EMAIL_DOMAIN = TEST_DOMAIN;
+});
 
 describe('College Email Domain Validator (@saitm.ac.in)', () => {
   it('should accept valid @saitm.ac.in emails', () => {
@@ -14,7 +22,7 @@ describe('College Email Domain Validator (@saitm.ac.in)', () => {
       const result = validateCollegeEmail(email);
       expect(result.isValid).toBe(true);
       expect(result.normalizedEmail).toBe(email);
-      expect(result.domain).toBe(ALLOWED_DOMAIN);
+      expect(result.domain).toBe(getAllowedDomain());
     }
   });
 

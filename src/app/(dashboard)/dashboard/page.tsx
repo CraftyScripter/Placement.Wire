@@ -540,6 +540,7 @@ export default function DashboardPage() {
           mobileOpen={sidebarOpen}
           onCloseMobile={() => setSidebarOpen(false)}
           onLogout={logout}
+          isAdmin={Boolean(user?.isAdmin)}
         />
 
         <main className="min-w-0 flex-1 space-y-4 sm:space-y-5 py-1 sm:py-4 lg:px-4 xl:px-6 3xl:px-10 3xl:space-y-6">
@@ -730,7 +731,7 @@ export default function DashboardPage() {
               </div>}
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 min-[1700px]:grid min-[1700px]:grid-cols-2 min-[1700px]:items-start min-[1700px]:gap-3 min-[1700px]:space-y-0">
               {visibleDrives.map((d) => (
                 <JobCard
                   key={d.id}
@@ -742,7 +743,7 @@ export default function DashboardPage() {
                   onApply={handleApply}
                 />
               ))}
-              {hasMore && <div ref={sentinelRef} className="flex justify-center py-6">
+              {hasMore && <div ref={sentinelRef} className="flex justify-center py-6 min-[1700px]:col-span-2">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-brandviolet" />
               </div>}
             </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession, createSession, FullSessionPayload } from './session';
 import { refreshAccessToken } from '@/lib/google/oauth';
+import { env } from '@/config/env';
 
 export interface AuthenticatedContext {
   session: FullSessionPayload;
@@ -15,7 +16,7 @@ export async function requireAuth(): Promise<
   if (!session) {
     return {
       error: NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required. Please sign in with your @saitm.ac.in account.' },
+        { error: 'Unauthorized', message: `Authentication required. Please sign in with your @${env.ALLOWED_EMAIL_DOMAIN} account.` },
         { status: 401 }
       ),
       context: null,

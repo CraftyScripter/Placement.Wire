@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSession } from '@/lib/auth/session';
+import { isAdminEmail } from '@/lib/admin/is-admin';
+import { recordVisit, readAnalytics, visitorKey } from '@/lib/analytics/store';
+import { getClientIp, resolveGeo } from '@/lib/analytics/geo';
 import { env } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +34,27 @@ export async function POST(req: NextRequest) {
       expiry_date: Date.now() + 3600 * 1000 * 24,
     },
   });
+
+  try {
+    const ip = getClientIp(req.headers);
+    const geo = await resolveGeo(ip, req.headers);
+    const existing = await readAnalytics();
+    const seenBefore = Boolean(existing.visitors[visitorKey(String(email), null, null)]);
+    await recordVisit({
+      event: seenBefore ? 'login' : 'signup',
+      email: String(email),
+      name: String(name),
+      path: '/api/v1/auth/mock',
+      ip: geo.ip || ip,
+      city: geo.city,
+      region: geo.region,
+      country: geo.country,
+      userAgent: req.headers.get('user-agent')?.slice(0, 300) || null,
+      isAdmin: isAdminEmail(String(email)),
+    });
+  } catch {
+    /* never block mock login */
+  }
 
   return NextResponse.json({
     success: true,

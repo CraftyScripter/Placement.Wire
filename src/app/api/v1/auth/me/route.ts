@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
+import { isAdminEmail } from '@/lib/admin/is-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,7 @@ export async function GET() {
         name: session.user.name,
         picture: session.user.picture,
         isMockUser: Boolean(session.user.isMockUser),
+        isAdmin: isAdminEmail(session.user.email),
       },
       googleConnected: !session.user.isMockUser,
     },

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { site } from '@/config/site';
+import { env } from '@/config/env';
+import { AnalyticsBeacon } from '@/components/analytics/AnalyticsBeacon';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -9,7 +11,7 @@ const plusJakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',
 });
 
-const APP_URL = process.env.APP_URL || 'http://localhost:8000';
+const APP_URL = env.APP_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
@@ -60,6 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${plusJakarta.variable}`}>
       <body className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-indigo-500/30 selection:text-indigo-200 antialiased">
+        <AnalyticsBeacon />
         {children}
       </body>
     </html>

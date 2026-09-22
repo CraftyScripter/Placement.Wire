@@ -141,7 +141,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({
               </span>
             )}
             {receivedFormatted && (
-              <span className="hidden shrink-0 items-center gap-1 text-[11px] xl:inline-flex">
+              <span className="hidden shrink-0 items-center gap-1 text-[11px] lg:inline-flex">
                 <Calendar className="h-3 w-3 text-neutral-500" />
                 {receivedFormatted}
               </span>

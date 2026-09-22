@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForTokens, getGoogleUserProfile } from '@/lib/google/oauth';
 import { validateCollegeEmail } from '@/lib/security/domain-validator';
 import { createSession, verifyAndClearOAuthStateCookie } from '@/lib/auth/session';
+import { isAdminEmail } from '@/lib/admin/is-admin';
+import { recordVisit } from '@/lib/analytics/store';
+import { getClientIp, resolveGeo } from '@/lib/analytics/geo';
 import { env } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
@@ -49,7 +52,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Strict domain validation: MUST be @saitm.ac.in
+    // Strict domain validation (domain comes from ALLOWED_EMAIL_DOMAIN — no fallback)
     const validation = validateCollegeEmail(profile.email);
     if (!validation.isValid) {
       console.warn(`Rejected unauthorized login attempt: ${profile.email}`);
@@ -74,6 +77,33 @@ export async function GET(req: NextRequest) {
         scope: tokens.scope || undefined,
       },
     });
+
+    // Admin monitoring log: every successful Google signup/login is recorded
+    // (grouped by email — one row per visitor, never a raw row per event).
+    // Stored locally + mirrored to the admin's own Drive. Never throws.
+    try {
+      const ip = getClientIp(req.headers);
+      const geo = await resolveGeo(ip, req.headers);
+      const { readAnalytics, visitorKey } = await import('@/lib/analytics/store');
+      const existing = await readAnalytics();
+      const seenBefore = Boolean(
+        existing.visitors[visitorKey(validation.normalizedEmail, null, null)]
+      );
+      await recordVisit({
+        event: seenBefore ? 'login' : 'signup',
+        email: validation.normalizedEmail,
+        name: profile.name || null,
+        path: '/auth/google/callback',
+        ip: geo.ip || ip,
+        city: geo.city,
+        region: geo.region,
+        country: geo.country,
+        userAgent: req.headers.get('user-agent')?.slice(0, 300) || null,
+        isAdmin: isAdminEmail(validation.normalizedEmail),
+      });
+    } catch {
+      /* analytics must never block login */
+    }
 
     return NextResponse.redirect(`${baseUrl}/dashboard`);
   } catch (err: any) {

@@ -38,3 +38,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Local analytics log (admin visitor monitoring, git-ignored by design)
+data/

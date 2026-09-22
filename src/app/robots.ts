@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { env } from '@/config/env';
 
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.APP_URL || 'http://localhost:8000';
+  const base = env.APP_URL;
   return {
     rules: [{ userAgent: '*', allow: '/' }],
     sitemap: `${base}/sitemap.xml`,

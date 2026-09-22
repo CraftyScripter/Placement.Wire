@@ -14,6 +14,7 @@ import {
   Star,
   Archive,
   Settings,
+  ShieldCheck,
   LogOut,
   X,
 } from 'lucide-react';
@@ -35,6 +36,7 @@ interface SidebarProps {
   mobileOpen: boolean;
   onCloseMobile: () => void;
   onLogout: () => void;
+  isAdmin?: boolean;
 }
 
 const NAV_ITEMS: { key: NavKey; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -55,9 +57,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
   onLogout,
+  isAdmin = false,
 }) => {
   const pathname = usePathname();
   const settingsActive = pathname === '/settings';
+  const adminActive = pathname === '/admin' || pathname?.startsWith('/admin/');
 
   // Lock background scroll while the mobile drawer is open.
   useEffect(() => {
@@ -105,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav className="mt-2 flex-1 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = activeNav === item.key && !settingsActive;
+          const isActive = activeNav === item.key && !settingsActive && !adminActive;
           const count = counts[item.key];
           return (
             <button
@@ -149,6 +153,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Settings className="h-[18px] w-[18px] shrink-0" />
           <span className="flex-1 text-left">Settings</span>
         </Link>
+
+        {/* Admin Panel — only rendered for the admin account */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            onClick={onCloseMobile}
+            className={`${navBtn} ${
+              adminActive
+                ? 'bg-amber-500 text-black'
+                : 'border border-amber-500/30 text-amber-300 hover:bg-amber-500/10 hover:text-amber-200'
+            }`}
+          >
+            <ShieldCheck className="h-[18px] w-[18px] shrink-0" />
+            <span className="flex-1 text-left">Admin Panel</span>
+          </Link>
+        )}
       </nav>
 
       {/* Logout */}
