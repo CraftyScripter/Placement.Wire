@@ -21,7 +21,7 @@ export function AnalyticsBeacon() {
   pathnameRef.current = pathname;
 
   const post = (payload: Record<string, unknown>) => {
-    fetch('/api/v1/analytics/track', {
+    fetch('/api/v1/visits/ping', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

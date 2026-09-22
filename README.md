@@ -23,7 +23,7 @@ You get placement announcements (drives, internships, hackathons) on your **coll
 
 Students receive placement announcements through their college Gmail accounts. These emails often contain important information scattered across paragraphs, bullet points, HTML tables, Google Drive documents, and application links.
 
-PlacementWire connects to a student's college Gmail account, identifies placement announcements, extracts structured information (company, roles, CTC, locations, eligibility, deadlines, and application links), and presents everything through a responsive, searchable SaaS dashboard with Kanban and List views. The List view automatically switches to a two-column layout on wide screens so large monitors don't go to waste.
+PlacementWire connects to a student's college Gmail account, identifies placement announcements, extracts structured information (company, roles, CTC, locations, eligibility, deadlines, and application links), and presents everything through a responsive, searchable SaaS dashboard with Kanban and List views.
 
 ---
 
@@ -152,10 +152,7 @@ PLACEMENT-WIRE/
    cp .env.example .env.local
    ```
 
-3. **Fill in the credentials** (every value is required — the app refuses to boot
-   if any required variable is missing; there are intentionally no fallback
-   defaults for secrets, emails or URLs anywhere in code — see `.env.example`
-   for the full list):
+3. **Fill in the credentials**:
    ```env
    NODE_ENV=development
    PORT=8000
@@ -169,10 +166,6 @@ PLACEMENT-WIRE/
 
    # Security
    ALLOWED_EMAIL_DOMAIN=saitm.ac.in
-
-   # Contact form relay (stays server-side, never exposed to the browser)
-   CONTACT_FORM_API_URL=https://your-relay-host/api/forms/placement-wire/submit
-   CONTACT_FORM_API_KEY=your-contact-form-api-key
 
    # Fast Development Testing (enables one-click mock login & sample fixture sync)
    DEV_MOCK_AUTH=true
@@ -232,7 +225,6 @@ PlacementWire includes unit and integration tests covering:
 - Email parser tests against real college announcements (**RGF India**, **75WAY Technologies**, **BriBooks**)
 - Non-destructive data merger (preserves user notes & status during sync)
 - Zod schema validation
-- Strict environment validation (no hardcoded secret fallbacks; missing variables fail fast with a clear error)
 
 Run the test suite:
 ```bash

@@ -39,6 +39,11 @@ const envSchema = z.object({
   CONTACT_FORM_API_URL: required('CONTACT_FORM_API_URL'),
   CONTACT_FORM_API_KEY: required('CONTACT_FORM_API_KEY'),
   ADMIN_EMAILS: required('ADMIN_EMAILS'),
+  // Optional: enables server-side analytics persistence on read-only hosts
+  // (Vercel/serverless). Paste the admin's Google refresh token here —
+  // get it from the Backup page ("Drive logging" section) after logging in
+  // as admin. Absent = disk-only mode (localhost / VPS with writable disk).
+  ADMIN_DRIVE_REFRESH_TOKEN: z.string().trim().min(1).optional(),
 });
 
 function loadEnv() {
@@ -56,6 +61,7 @@ function loadEnv() {
       CONTACT_FORM_API_URL: process.env.CONTACT_FORM_API_URL,
       CONTACT_FORM_API_KEY: process.env.CONTACT_FORM_API_KEY,
       ADMIN_EMAILS: process.env.ADMIN_EMAILS,
+      ADMIN_DRIVE_REFRESH_TOKEN: process.env.ADMIN_DRIVE_REFRESH_TOKEN || undefined,
     });
   } catch (err) {
     if (err instanceof z.ZodError) {

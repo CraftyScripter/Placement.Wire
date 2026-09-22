@@ -72,6 +72,8 @@ describe('grouped analytics store (v2)', () => {
     const overview = await buildOverview(data);
     expect(overview.totals.onlineNow).toBe(1);
     expect(overview.totals.avgSessionSecs).toBeGreaterThan(0);
+    expect(overview.storage.mode).toBe('disk');
+    expect(overview.storage.writable).toBe(true);
   });
 
   it('strips nothing here but fingerprint is stable for same IP+UA', () => {

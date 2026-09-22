@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
+import { env } from '@/config/env';
 import { parseDevice } from './device';
 
 /**
@@ -12,6 +13,14 @@ import { parseDevice } from './device';
  *  - per-visitor page cap (20, least-recently-used prune)
  *  - 30-day rolling daily counters
  *  - 90-day prune of single-visit anonymous rows
+ *
+ * STORAGE BACKENDS (chosen automatically):
+ *  - disk  — writable local disk (localhost / VPS). Primary.
+ *  - drive — read-only hosts (Vercel/serverless). Persists into the admin's
+ *            own Google Drive via ADMIN_DRIVE_REFRESH_TOKEN. Same cumulative
+ *            file the Backup button writes, with read-modify-write retries.
+ *  - none  — nothing writable and no Drive token: hits are counted nowhere.
+ *            The admin console surfaces this state instead of silent zeros.
  */
 
 export interface PageStat {
@@ -57,7 +66,7 @@ export interface AnalyticsFile {
   visitors: Record<string, Visitor>;
   /** YYYY-MM-DD -> stats, rolling 30 days */
   daily: Record<string, DayStat>;
-  /** 0-23 IST-ish (server local hour) visit distribution */
+  /** 0-23 (server local hour) visit distribution */
   hourly: number[];
   pagesGlobal: Record<string, { views: number; visitors: number; lastVisited: string }>;
   devices: Record<string, number>;
@@ -73,6 +82,14 @@ export interface AnalyticsFile {
   };
 }
 
+export type StorageMode = 'disk' | 'drive' | 'none';
+
+export interface StorageStatus {
+  mode: StorageMode;
+  writable: boolean;
+  detail: string;
+}
+
 const MAX_PAGES_PER_VISITOR = 20;
 const DAILY_RETENTION_DAYS = 30;
 const ANON_PRUNE_DAYS = 90;
@@ -84,7 +101,7 @@ export function analyticsFilePath(): string {
   return path.join(process.cwd(), 'data', 'analytics.json');
 }
 
-function emptyFile(): AnalyticsFile {
+export function emptyAnalyticsFile(): AnalyticsFile {
   return {
     version: 2,
     updatedAt: new Date().toISOString(),
@@ -128,7 +145,63 @@ function locLabel(city?: string, region?: string, country?: string): string | nu
   return parts.length ? parts.join(', ') : null;
 }
 
-async function writeAnalytics(data: AnalyticsFile): Promise<void> {
+function hostOf(ref: string | null | undefined): string | null {
+  if (!ref) return null;
+  try {
+    const u = new URL(ref);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return u.hostname.slice(0, 60);
+  } catch {
+    return null;
+  }
+}
+
+// ---------- Storage backend selection ----------
+
+// Tri-state cache: null = unprobed. Reset to null on any disk failure so a
+// transient error doesn't permanently flip the backend.
+let diskOk: boolean | null = null;
+
+function hasDriveToken(): boolean {
+  return Boolean(env.ADMIN_DRIVE_REFRESH_TOKEN);
+}
+
+async function probeDisk(): Promise<boolean> {
+  if (diskOk !== null) return diskOk;
+  try {
+    const fp = analyticsFilePath();
+    await fs.mkdir(path.dirname(fp), { recursive: true });
+    const probe = `${fp}.probe`;
+    await fs.writeFile(probe, '1', 'utf-8');
+    await fs.rm(probe, { force: true });
+    diskOk = true;
+  } catch {
+    diskOk = false;
+  }
+  return diskOk;
+}
+
+export async function getStorageStatus(): Promise<StorageStatus> {
+  if (await probeDisk()) {
+    return { mode: 'disk', writable: true, detail: `Local log file (${analyticsFilePath()})` };
+  }
+  if (hasDriveToken()) {
+    return {
+      mode: 'drive',
+      writable: true,
+      detail: "Admin's Google Drive (PlacementWire_Data/admin_analytics.json)",
+    };
+  }
+  return {
+    mode: 'none',
+    writable: false,
+    detail:
+      'Server disk is read-only (serverless host) and ADMIN_DRIVE_REFRESH_TOKEN is not set. ' +
+      'Set it from Admin → Backup → Drive logging.',
+  };
+}
+
+async function persistDisk(data: AnalyticsFile): Promise<void> {
   data.updatedAt = new Date().toISOString();
   data.totals.visitors = Object.keys(data.visitors).length;
   const fp = analyticsFilePath();
@@ -140,7 +213,7 @@ async function writeAnalytics(data: AnalyticsFile): Promise<void> {
 
 /** Fold a legacy v1 file (users + raw visits) into the grouped v2 shape. */
 function migrateV1(raw: Record<string, any>): AnalyticsFile {
-  const data = emptyFile();
+  const data = emptyAnalyticsFile();
   const visits: any[] = Array.isArray(raw.visits) ? raw.visits : [];
   const users: Record<string, any> = raw.users || {};
 
@@ -227,7 +300,6 @@ function migrateV1(raw: Record<string, any>): AnalyticsFile {
     if (loc) data.locations[loc] = (data.locations[loc] || 0) + 1;
   }
 
-  // Drop daily buckets older than retention
   pruneDaily(data);
   return data;
 }
@@ -254,26 +326,45 @@ function pruneVisitors(data: AnalyticsFile): void {
   }
 }
 
-export async function readAnalytics(): Promise<AnalyticsFile> {
+function ensureV2Shape(parsed: Record<string, any>): AnalyticsFile | null {
+  if (parsed.version === 2 && parsed.visitors && parsed.totals) {
+    const data = parsed as unknown as AnalyticsFile;
+    if (!Array.isArray(data.hourly) || data.hourly.length !== 24) {
+      data.hourly = Array.from({ length: 24 }, () => 0);
+    }
+    return data;
+  }
+  return null;
+}
+
+async function readDisk(): Promise<AnalyticsFile> {
   try {
     const raw = await fs.readFile(analyticsFilePath(), 'utf-8');
     const parsed = JSON.parse(raw) as Record<string, any>;
-    if (parsed.version === 2 && parsed.visitors && parsed.totals) {
-      const data = parsed as unknown as AnalyticsFile;
-      if (!Array.isArray(data.hourly) || data.hourly.length !== 24) {
-        data.hourly = Array.from({ length: 24 }, () => 0);
-      }
-      return data;
-    }
+    const v2 = ensureV2Shape(parsed);
+    if (v2) return v2;
     if (parsed.visits || parsed.users) {
       const migrated = migrateV1(parsed);
-      await writeAnalytics(migrated);
+      await persistDisk(migrated);
       return migrated;
     }
-    return emptyFile();
-  } catch {
-    return emptyFile();
+  } catch (err) {
+    diskOk = null; // read failure may mean disk trouble — re-probe next time
   }
+  return emptyAnalyticsFile();
+}
+
+export async function readAnalytics(): Promise<AnalyticsFile> {
+  if (await probeDisk()) return readDisk();
+  if (hasDriveToken()) {
+    try {
+      const { readDriveAnalytics } = await import('./drive-store');
+      return (await readDriveAnalytics(env.ADMIN_DRIVE_REFRESH_TOKEN!)) || emptyAnalyticsFile();
+    } catch (err) {
+      console.warn('Analytics Drive read failed:', err);
+    }
+  }
+  return emptyAnalyticsFile();
 }
 
 export interface RecordVisitInput {
@@ -300,105 +391,120 @@ function enforcePageCap(vis: Visitor): void {
     .forEach((k) => delete vis.pages[k]);
 }
 
+/** Pure mutation: fold one hit into grouped counters. Shared by all backends. */
+function applyVisit(data: AnalyticsFile, input: RecordVisitInput, now: Date): void {
+  const nowIso = now.toISOString();
+  const today = dayKey(now);
+  const email = input.email?.trim().toLowerCase() || null;
+  const key = visitorKey(email, input.ip || null, input.userAgent || null);
+
+  let vis = data.visitors[key];
+  const isNew = !vis;
+  if (!vis) {
+    vis = data.visitors[key] = {
+      key,
+      email,
+      name: input.name || null,
+      firstSeen: nowIso,
+      lastActive: new Date(0).toISOString(),
+      lastPath: null,
+      totalVisits: 0,
+      sessions: 0,
+      sessionSecs: 0,
+      loginCount: 0,
+      lastLogin: null,
+      lastIp: null,
+      device: parseDevice(input.userAgent),
+      referrer: hostOf(input.referrer),
+      isAdmin: Boolean(input.isAdmin),
+      pages: {},
+    };
+    data.totals.visitors++;
+    // First-seen attribution counters (counted once per visitor)
+    data.devices[vis.device] = (data.devices[vis.device] || 0) + 1;
+    const loc = locLabel(input.city, input.region, input.country);
+    if (loc) data.locations[loc] = (data.locations[loc] || 0) + 1;
+    if (vis.referrer) data.referrers[vis.referrer] = (data.referrers[vis.referrer] || 0) + 1;
+  }
+
+  if (email && !vis.email) vis.email = email;
+  if (input.name && !vis.name) vis.name = input.name;
+  if (input.isAdmin) vis.isAdmin = true;
+  if (input.ip) vis.lastIp = input.ip;
+  if (input.city && vis.city !== input.city) {
+    vis.city = input.city;
+    vis.region = input.region;
+    vis.country = input.country;
+  }
+
+  // New session after 30 min of inactivity
+  const lastActiveMs = new Date(vis.lastActive).getTime() || 0;
+  if (!lastActiveMs || now.getTime() - lastActiveMs > SESSION_TIMEOUT_MS) {
+    vis.sessions++;
+    data.totals.sessions++;
+  }
+  // Daily unique-visitor counting
+  const lastActiveDay = vis.lastActive.slice(0, 10);
+  vis.lastActive = nowIso;
+  const dd = dayOf(data, today);
+  if (lastActiveDay !== today) dd.visitors++;
+
+  vis.totalVisits++;
+  data.totals.visits++;
+  dd.visits++;
+  const h = now.getHours();
+  if (data.hourly[h] !== undefined) data.hourly[h]++;
+
+  if (input.event === 'login' || input.event === 'signup') {
+    vis.loginCount++;
+    vis.lastLogin = nowIso;
+    data.totals.logins++;
+    dd.logins++;
+    // Signup = first-ever login (or explicit signup event)
+    if (input.event === 'signup' || (input.event === 'login' && isNew)) {
+      data.totals.signups++;
+      dd.signups++;
+    }
+  }
+
+  if (input.path) {
+    const p = input.path;
+    vis.lastPath = p;
+    const isFirstView = !vis.pages[p];
+    const ps = vis.pages[p] || { count: 0, lastSeen: nowIso };
+    ps.count++;
+    ps.lastSeen = nowIso;
+    vis.pages[p] = ps;
+    enforcePageCap(vis);
+    const g = data.pagesGlobal[p] || { views: 0, visitors: 0, lastVisited: nowIso };
+    g.views++;
+    if (isFirstView) g.visitors++;
+    if (nowIso > g.lastVisited) g.lastVisited = nowIso;
+    data.pagesGlobal[p] = g;
+  }
+
+  pruneDaily(data);
+  if (Math.random() < 0.05) pruneVisitors(data); // amortized prune
+}
+
 /** One grouped upsert per hit. Never throws. */
 export async function recordVisit(input: RecordVisitInput): Promise<void> {
+  const now = new Date();
   try {
-    const data = await readAnalytics();
-    const now = new Date();
-    const nowIso = now.toISOString();
-    const today = dayKey(now);
-    const email = input.email?.trim().toLowerCase() || null;
-    const key = visitorKey(email, input.ip || null, input.userAgent || null);
-
-    let vis = data.visitors[key];
-    const isNew = !vis;
-    if (!vis) {
-      vis = data.visitors[key] = {
-        key,
-        email,
-        name: input.name || null,
-        firstSeen: nowIso,
-        lastActive: new Date(0).toISOString(),
-        lastPath: null,
-        totalVisits: 0,
-        sessions: 0,
-        sessionSecs: 0,
-        loginCount: 0,
-        lastLogin: null,
-        lastIp: null,
-        device: parseDevice(input.userAgent),
-        referrer: hostOf(input.referrer),
-        isAdmin: Boolean(input.isAdmin),
-        pages: {},
-      };
-      data.totals.visitors++;
-      // First-seen attribution counters (counted once per visitor)
-      data.devices[vis.device] = (data.devices[vis.device] || 0) + 1;
-      const loc = locLabel(input.city, input.region, input.country);
-      if (loc) data.locations[loc] = (data.locations[loc] || 0) + 1;
-      if (vis.referrer) data.referrers[vis.referrer] = (data.referrers[vis.referrer] || 0) + 1;
+    if (await probeDisk()) {
+      const data = await readDisk();
+      applyVisit(data, input, now);
+      await persistDisk(data);
+      return;
     }
-
-    if (email && !vis.email) vis.email = email;
-    if (input.name && !vis.name) vis.name = input.name;
-    if (input.isAdmin) vis.isAdmin = true;
-    if (input.ip) vis.lastIp = input.ip;
-    if (input.city && vis.city !== input.city) {
-      vis.city = input.city;
-      vis.region = input.region;
-      vis.country = input.country;
+    if (hasDriveToken()) {
+      const { updateDriveAnalytics } = await import('./drive-store');
+      await updateDriveAnalytics(env.ADMIN_DRIVE_REFRESH_TOKEN!, (data) => applyVisit(data, input, now));
+      return;
     }
-
-    // New session after 30 min of inactivity
-    const lastActiveMs = new Date(vis.lastActive).getTime() || 0;
-    if (!lastActiveMs || now.getTime() - lastActiveMs > SESSION_TIMEOUT_MS) {
-      vis.sessions++;
-      data.totals.sessions++;
-    }
-    // Daily unique-visitor counting
-    const lastActiveDay = vis.lastActive.slice(0, 10);
-    vis.lastActive = nowIso;
-    const dd = dayOf(data, today);
-    if (lastActiveDay !== today) dd.visitors++;
-
-    vis.totalVisits++;
-    data.totals.visits++;
-    dd.visits++;
-    const h = now.getHours();
-    if (data.hourly[h] !== undefined) data.hourly[h]++;
-
-    if (input.event === 'login' || input.event === 'signup') {
-      vis.loginCount++;
-      vis.lastLogin = nowIso;
-      data.totals.logins++;
-      dd.logins++;
-      // Signup = first-ever login (or explicit signup event)
-      if (input.event === 'signup' || (input.event === 'login' && isNew)) {
-        data.totals.signups++;
-        dd.signups++;
-      }
-    }
-
-    if (input.path) {
-      const p = input.path;
-      vis.lastPath = p;
-      const isFirstView = !vis.pages[p];
-      const ps = vis.pages[p] || { count: 0, lastSeen: nowIso };
-      ps.count++;
-      ps.lastSeen = nowIso;
-      vis.pages[p] = ps;
-      enforcePageCap(vis);
-      const g = data.pagesGlobal[p] || { views: 0, visitors: 0, lastVisited: nowIso };
-      g.views++;
-      if (isFirstView) g.visitors++;
-      if (nowIso > g.lastVisited) g.lastVisited = nowIso;
-      data.pagesGlobal[p] = g;
-    }
-
-    pruneDaily(data);
-    if (Math.random() < 0.05) pruneVisitors(data); // amortized prune
-    await writeAnalytics(data);
+    console.warn('Analytics dropped (no writable storage — see Admin → Backup):', input.event, input.path);
   } catch (err) {
+    diskOk = null;
     console.warn('Analytics recordVisit failed:', err);
   }
 }
@@ -412,47 +518,54 @@ export interface HeartbeatInput {
   sessionSecs?: number;
 }
 
-/**
- * Lightweight presence ping. Does NOT inflate visit counters.
- * Writes to disk only when the last write is >2 min old or when
- * closing session seconds arrive.
- */
-export async function recordHeartbeat(input: HeartbeatInput): Promise<void> {
-  try {
-    const data = await readAnalytics();
-    const email = input.email?.trim().toLowerCase() || null;
-    const key = visitorKey(email, input.ip || null, input.userAgent || null);
-    const vis = data.visitors[key];
-    if (!vis) return; // unknown tab — next pageview will register it
-    const now = new Date();
-    const nowIso = now.toISOString();
-    const today = dayKey(now);
+/** Returns true when the heartbeat carries a change worth persisting. */
+function applyHeartbeat(data: AnalyticsFile, input: HeartbeatInput, now: Date): boolean {
+  const email = input.email?.trim().toLowerCase() || null;
+  const key = visitorKey(email, input.ip || null, input.userAgent || null);
+  const vis = data.visitors[key];
+  if (!vis) return false; // unknown tab — next pageview will register it
+  const nowIso = now.toISOString();
+  const today = dayKey(now);
 
-    const stale = now.getTime() - new Date(vis.lastActive).getTime() > HEARTBEAT_WRITE_MS;
-    if (input.sessionSecs && input.sessionSecs > 0) {
-      vis.sessionSecs += Math.min(input.sessionSecs, 12 * 3600);
-      data.totals.sessionSecs += Math.min(input.sessionSecs, 12 * 3600);
-    }
-    if (!stale && !input.sessionSecs) return;
-
-    const lastActiveDay = vis.lastActive.slice(0, 10);
-    vis.lastActive = nowIso;
-    if (input.path) vis.lastPath = input.path;
-    if (lastActiveDay !== today) dayOf(data, today).visitors++;
-    await writeAnalytics(data);
-  } catch (err) {
-    console.warn('Analytics heartbeat failed:', err);
+  if (input.sessionSecs && input.sessionSecs > 0) {
+    const capped = Math.min(input.sessionSecs, 12 * 3600);
+    vis.sessionSecs += capped;
+    data.totals.sessionSecs += capped;
+  } else if (now.getTime() - new Date(vis.lastActive).getTime() <= HEARTBEAT_WRITE_MS) {
+    return false; // throttled — nothing new to persist
   }
+
+  const lastActiveDay = vis.lastActive.slice(0, 10);
+  vis.lastActive = nowIso;
+  if (input.path) vis.lastPath = input.path;
+  if (lastActiveDay !== today) dayOf(data, today).visitors++;
+  return true;
 }
 
-function hostOf(ref: string | null | undefined): string | null {
-  if (!ref) return null;
+/**
+ * Lightweight presence ping. Does NOT inflate visit counters.
+ * On disk it writes only when the last write is >2 min old (or session
+ * seconds arrive); on Drive every persisted heartbeat is one read+write.
+ */
+export async function recordHeartbeat(input: HeartbeatInput): Promise<void> {
+  const now = new Date();
   try {
-    const u = new URL(ref);
-    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
-    return u.hostname.slice(0, 60);
-  } catch {
-    return null;
+    if (await probeDisk()) {
+      const data = await readDisk();
+      if (applyHeartbeat(data, input, now)) await persistDisk(data);
+      return;
+    }
+    if (hasDriveToken()) {
+      const { readDriveAnalytics, overwriteDriveAnalytics } = await import('./drive-store');
+      const data = (await readDriveAnalytics(env.ADMIN_DRIVE_REFRESH_TOKEN!)) || emptyAnalyticsFile();
+      if (applyHeartbeat(data, input, now)) {
+        await overwriteDriveAnalytics(env.ADMIN_DRIVE_REFRESH_TOKEN!, data);
+      }
+      return;
+    }
+  } catch (err) {
+    diskOk = null;
+    console.warn('Analytics heartbeat failed:', err);
   }
 }
 
@@ -461,6 +574,7 @@ function hostOf(ref: string | null | undefined): string | null {
 export interface AdminOverview {
   updatedAt: string;
   fileBytes: number;
+  storage: StorageStatus;
   totals: AnalyticsFile['totals'] & {
     onlineNow: number;
     dau: number;
@@ -512,7 +626,7 @@ export async function buildOverview(data: AnalyticsFile): Promise<AdminOverview>
 
   let fileBytes = 0;
   try {
-    fileBytes = (await fs.stat(analyticsFilePath())).size;
+    if (await probeDisk()) fileBytes = (await fs.stat(analyticsFilePath())).size;
   } catch {
     /* unreadable size */
   }
@@ -520,6 +634,7 @@ export async function buildOverview(data: AnalyticsFile): Promise<AdminOverview>
   return {
     updatedAt: data.updatedAt,
     fileBytes,
+    storage: await getStorageStatus(),
     totals: {
       ...data.totals,
       onlineNow: liveNow.length,

@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/auth-guard';
 import { isAdminEmail } from '@/lib/admin/is-admin';
-import { readAnalytics } from '@/lib/analytics/store';
+import { getStorageStatus, readAnalytics } from '@/lib/analytics/store';
 import { backupAnalyticsToAdminDrive } from '@/lib/analytics/drive-backup';
+import { overwriteDriveAnalytics } from '@/lib/analytics/drive-store';
+import { env } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Copies the analytics log into the admin's own Google Drive
- * (PlacementWire_Data/admin_analytics.json). Uses the admin's
- * current OAuth access token — nothing leaves your Drive.
+ * (PlacementWire_Data/admin_analytics.json).
+ * - Disk mode: uploads the local log using the admin's current OAuth token.
+ * - Drive mode (serverless): the Drive file already IS the live log —
+ *   uses the stored refresh token, so it works headlessly.
  */
 export async function POST() {
   const auth = await requireAuth();
@@ -30,13 +34,18 @@ export async function POST() {
   }
 
   try {
+    const storage = await getStorageStatus();
     const data = await readAnalytics();
+    if (storage.mode === 'drive' && env.ADMIN_DRIVE_REFRESH_TOKEN) {
+      await overwriteDriveAnalytics(env.ADMIN_DRIVE_REFRESH_TOKEN, data);
+      return NextResponse.json({ success: true, fileName: 'admin_analytics.json', backend: 'drive' });
+    }
     const result = await backupAnalyticsToAdminDrive(accessToken, {
       ...data,
       backedUpAt: new Date().toISOString(),
       backedUpBy: session.user.email,
     });
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json({ success: true, ...result, backend: 'disk' });
   } catch (err) {
     console.error('Admin Drive backup failed:', err);
     return NextResponse.json(

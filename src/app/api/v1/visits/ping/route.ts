@@ -3,7 +3,7 @@ import { handleTrackPing } from '@/lib/analytics/track-handler';
 
 export const dynamic = 'force-dynamic';
 
-/** Legacy alias — kept so older cached clients keep reporting. */
+/** Canonical visitor beacon (path avoids adblocker "analytics" filters). */
 export async function POST(req: NextRequest) {
   return handleTrackPing(req);
 }
