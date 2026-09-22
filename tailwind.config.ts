@@ -8,6 +8,14 @@ const config: Config = {
   ],
   darkMode: "class",
   theme: {
+    screens: {
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+      "3xl": "1800px",
+    },
     extend: {
       colors: {
         // Dashboard palette (target redesign)
@@ -89,9 +97,40 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(-2px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        drawerIn: {
+          from: { opacity: "0.4", transform: "translateX(-100%)" },
+          to: { opacity: "1", transform: "translateX(0)" },
+        },
+        overlayFade: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        popIn: {
+          from: { opacity: "0", transform: "scale(0.96) translateY(-6px)" },
+          to: { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+        sheetUp: {
+          from: { opacity: "0", transform: "translateY(48px) scale(0.98)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        rowIn: {
+          from: { opacity: "0", transform: "translateX(10px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
+        },
+        badgePop: {
+          "0%": { transform: "scale(0.4)" },
+          "60%": { transform: "scale(1.15)" },
+          "100%": { transform: "scale(1)" },
+        },
       },
       animation: {
         "menu-fade": "menuFade 100ms ease-out",
+        "drawer-in": "drawerIn 220ms cubic-bezier(0.32, 0.72, 0, 1)",
+        "overlay-fade": "overlayFade 180ms ease-out",
+        "pop-in": "popIn 180ms cubic-bezier(0.32, 0.72, 0, 1)",
+        "sheet-up": "sheetUp 240ms cubic-bezier(0.32, 0.72, 0, 1)",
+        "row-in": "rowIn 200ms ease-out both",
+        "badge-pop": "badgePop 250ms cubic-bezier(0.32, 0.72, 0, 1)",
       },
     },
   },

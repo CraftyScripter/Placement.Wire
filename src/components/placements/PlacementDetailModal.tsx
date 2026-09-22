@@ -66,26 +66,26 @@ export const PlacementDetailModal: React.FC<PlacementDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 overflow-y-auto">
+    <div className="safe-bottom fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4 overflow-y-auto">
       <div
-        className="relative w-full max-w-2xl rounded-2xl border border-white/10 bg-ink-card p-5 sm:p-6 text-slate-100 my-8"
+        className="relative my-0 sm:my-8 max-h-[92dvh] flex w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-white/10 bg-ink-card text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
-          <div className="flex items-start gap-3">
-            <div className="h-12 w-12 rounded-lg bg-white/5 text-slate-300 font-bold flex items-center justify-center text-lg border border-white/10">
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 p-4 sm:p-5 sm:pb-4">
+          <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:gap-3">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-lg bg-white/5 text-slate-300 font-bold items-center justify-center text-base sm:text-lg border border-white/10">
               {drive.company.charAt(0)}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white">{drive.company}</h2>
+                <h2 className="min-w-0 flex-1 truncate text-base sm:text-xl font-bold text-white" title={drive.company}>{drive.company}</h2>
                 {drive.company_website && (
                   <a
                     href={drive.company_website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-400 hover:text-indigo-400 transition-colors duration-150"
+                    className="shrink-0 text-slate-400 hover:text-indigo-400 transition-colors duration-150"
                     title="Visit official website"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -93,7 +93,7 @@ export const PlacementDetailModal: React.FC<PlacementDetailModalProps> = ({
                 )}
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-slate-300 font-semibold">
+                <span className="max-w-full truncate rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-slate-300 font-semibold">
                   {drive.drive_type.replace(/_/g, ' ')}
                 </span>
                 <span className="text-slate-400">•</span>
@@ -104,7 +104,7 @@ export const PlacementDetailModal: React.FC<PlacementDetailModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={() => onToggleStar(drive.id)}
               className={`p-2 rounded-lg border transition-colors duration-150 ${
@@ -127,7 +127,7 @@ export const PlacementDetailModal: React.FC<PlacementDetailModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="mt-4 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="mt-0 space-y-4 overflow-y-auto p-4 sm:p-5 max-h-[calc(92dvh-88px)] sm:max-h-[70vh]">
           {/* Status & Quick Action Bar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
             <div className="flex items-center gap-2.5">
@@ -191,10 +191,10 @@ export const PlacementDetailModal: React.FC<PlacementDetailModalProps> = ({
               {drive.positions.map((pos, idx) => (
                 <div
                   key={idx}
-                  className="rounded-lg border border-white/10 bg-white/[0.03] p-4 space-y-2.5"
+                  className="rounded-lg border border-white/10 bg-white/[0.03] p-3.5 sm:p-4 space-y-2.5"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-semibold text-white">{pos.role}</h4>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h4 className="min-w-0 flex-1 text-sm font-semibold text-white break-words">{pos.role}</h4>
                     {pos.ctc && (
                       <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
                         <IndianRupee className="h-3 w-3" /> {pos.ctc}

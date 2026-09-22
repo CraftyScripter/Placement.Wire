@@ -91,7 +91,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start overflow-x-auto pb-4">
+    <div className="grid grid-cols-1 min-[560px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 items-start overflow-x-auto no-scrollbar snap-x snap-mandatory md:snap-none pb-4 -mx-1 px-1">
       {COLUMNS.map((col) => {
         const columnDrives = drives.filter((d) => d.status === col.id);
 

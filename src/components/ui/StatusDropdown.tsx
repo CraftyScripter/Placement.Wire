@@ -114,7 +114,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                 ? { top: pos.top, left: pos.left }
                 : { top: -9999, left: -9999, visibility: 'hidden' }
             }
-            className="fixed z-[100] min-w-[150px] rounded-xl border border-white/10 bg-ink-card p-1.5 shadow-menu animate-menu-fade focus:outline-none"
+            className="fixed z-[100] min-w-[150px] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-ink-card p-1.5 shadow-menu animate-menu-fade focus:outline-none"
           >
             {ALL_STATUSES.map((st) => {
               const isSelected = st === status;

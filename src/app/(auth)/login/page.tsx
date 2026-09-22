@@ -71,23 +71,23 @@ function LoginContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0c10] p-4 text-slate-100">
-      <div className="w-full max-w-md space-y-6">
+    <div className="flex min-h-screen flex-col items-center justify-center overflow-x-clip bg-[#0a0c10] p-4 text-slate-100">
+      <div className="w-full max-w-md space-y-5 sm:space-y-6">
         <div className="text-center">
-          <Link href="/" className="inline-block">
+          <Link href="/" className="inline-block" aria-label="Back to homepage">
             <Image
               src="/icon_dark.png"
               alt="PlacementWire Logo"
               width={52}
               height={66}
-              className="h-14 w-auto object-contain mx-auto"
+              className="h-12 sm:h-14 w-auto object-contain mx-auto"
               priority
             />
+            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              Placement<span className="text-indigo-400">Wire</span>
+            </h1>
           </Link>
-          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            Placement<span className="text-indigo-400">Wire</span>
-          </h1>
-          <p className="mt-1 text-xs text-slate-400">Student Portal • St. Andrews Institute of Technology & Management</p>
+          <p className="mt-1 px-2 text-[11px] sm:text-xs text-slate-400">Student Portal • St. Andrews Institute of Technology & Management</p>
         </div>
 
         {errorParam === 'domain_unauthorized' && (
@@ -123,7 +123,7 @@ function LoginContent() {
           </div>
         )}
 
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-6 sm:p-8 space-y-6">
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-5 sm:p-8 space-y-6">
           <div className="space-y-4">
             <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3.5 text-xs text-slate-300">
               <div className="flex items-center gap-1.5 font-semibold text-slate-200">

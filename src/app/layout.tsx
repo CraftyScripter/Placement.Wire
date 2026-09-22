@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+import { site } from '@/config/site';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -8,10 +9,43 @@ const plusJakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',
 });
 
+const APP_URL = process.env.APP_URL || 'http://localhost:8000';
+
 export const metadata: Metadata = {
-  title: 'PlacementWire — Your Placement Emails. Organized.',
-  description:
-    'Smart placement email management and drive-tracking platform designed exclusively for students of St. Andrews Institute of Technology and Management (SAITM).',
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: 'PlacementWire — Your Placement Emails. Organized.',
+    template: '%s | PlacementWire',
+  },
+  description: site.description,
+  keywords: [
+    'PlacementWire',
+    'SAITM placements',
+    'campus drives',
+    'placement tracker',
+    'SAITM Gurgaon',
+    'internship tracker',
+    'CRC emails',
+    'college placements',
+  ],
+  authors: [{ name: site.creator.name, url: site.creator.github }],
+  creator: site.creator.name,
+  publisher: 'PlacementWire',
+  robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    siteName: 'PlacementWire',
+    title: 'PlacementWire — Your Placement Emails. Organized.',
+    description: site.description,
+    images: [{ url: '/icon_dark.png', width: 512, height: 512, alt: 'PlacementWire' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'PlacementWire — Your Placement Emails. Organized.',
+    description: site.description,
+    images: ['/icon_dark.png'],
+  },
   icons: {
     icon: '/icon_dark.png',
     apple: '/icon_dark.png',

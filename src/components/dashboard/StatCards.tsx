@@ -91,21 +91,21 @@ export const StatCards: React.FC<StatCardsProps> = React.memo(({ drives }) => {
   }, [drives]);
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-4 lg:grid-cols-4">
       {stats.map((s) => (
         <div
           key={s.key}
-          className="rounded-2xl border border-white/5 bg-ink-card p-4 sm:p-5"
+          className="min-w-0 rounded-2xl border border-white/5 bg-ink-card p-3.5 min-[400px]:p-4 sm:p-5"
         >
           <span
-            className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${s.badge}`}
+            className={`inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[9px] min-[400px]:text-[10px] font-bold uppercase tracking-wider ${s.badge}`}
           >
             {s.label}
           </span>
-          <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+          <div className="mt-2 text-2xl min-[400px]:text-3xl font-extrabold tracking-tight text-white tabular-nums">
             {s.value}
           </div>
-          <p className="mt-1 text-xs text-neutral-500">{s.sub}</p>
+          <p className="mt-1 truncate text-[11px] sm:text-xs text-neutral-500" title={s.sub}>{s.sub}</p>
         </div>
       ))}
     </div>

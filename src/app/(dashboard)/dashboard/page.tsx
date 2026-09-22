@@ -2,9 +2,11 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { Bell, Menu, RefreshCw, Check, AlertCircle, CheckCircle2, Cloud, X, Trash2 } from 'lucide-react';
+import { Bell, Menu, RefreshCw, Check, AlertCircle, CheckCircle2, Cloud, X } from 'lucide-react';
 import { Sidebar, NavKey } from '@/components/layout/Sidebar';
+import { NotificationPanel } from '@/components/dashboard/NotificationPanel';
 import { StatCards } from '@/components/dashboard/StatCards';
 import {
   FilterBar,
@@ -13,14 +15,33 @@ import {
   FilterCriteria,
 } from '@/components/dashboard/FilterBar';
 import { JobCard } from '@/components/dashboard/JobCard';
-import { PlacementCardView } from '@/components/cards/PlacementCardView';
-import { PlacementDetailModal } from '@/components/placements/PlacementDetailModal';
+// Below-the-fold / on-demand chunks: excluded from the initial dashboard
+// bundle so first paint stays fast. The modal returns null until opened,
+// so lazy-loading it costs nothing on load.
+const PlacementCardView = dynamic(
+  () => import('@/components/cards/PlacementCardView').then((m) => m.PlacementCardView),
+  { ssr: false, loading: () => <CardsFallback /> }
+);
+const PlacementDetailModal = dynamic(
+  () => import('@/components/placements/PlacementDetailModal').then((m) => m.PlacementDetailModal),
+  { ssr: false }
+);
+
+function CardsFallback() {
+  return (
+    <div className="grid grid-cols-1 min-[560px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-3 sm:gap-4 3xl:gap-5">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <div key={i} className="h-56 animate-pulse rounded-2xl border border-white/5 bg-ink-card" />
+      ))}
+    </div>
+  );
+}
 import { EmptyState } from '@/components/shared/EmptyState';
 import { usePlacements } from '@/hooks/use-placements';
 import { useAuth } from '@/hooks/use-auth';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { useAutoSync } from '@/hooks/use-auto-sync';
-import { formatDeadline, resolveDeadlineMs } from '@/lib/utils/deadline';
+import { resolveDeadlineMs } from '@/lib/utils/deadline';
 import { driveMatchesPref } from '@/lib/utils/course';
 import { PlacementDrive } from '@/schemas/placement.schema';
 
@@ -510,8 +531,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-ink text-neutral-200">
-      <div className="mx-auto flex w-full gap-4 p-3 sm:p-4 xl:gap-5 xl:p-5">
+    <div className="min-h-screen overflow-x-clip bg-ink text-neutral-200">
+      <div className="mx-auto flex w-full gap-3 p-2.5 min-[400px]:gap-4 min-[400px]:p-3 sm:p-4 2xl:gap-6 2xl:p-6">
         <Sidebar
           activeNav={activeNav}
           onNavigate={handleNavigate}
@@ -521,15 +542,16 @@ export default function DashboardPage() {
           onLogout={logout}
         />
 
-        <main className="min-w-0 flex-1 space-y-5 py-2 sm:py-4 lg:px-4 xl:px-6">
+        <main className="min-w-0 flex-1 space-y-4 sm:space-y-5 py-1 sm:py-4 lg:px-4 xl:px-6 3xl:px-10 3xl:space-y-6">
           {/* Header */}
-          <header className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <header className="flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="rounded-xl bg-ink-card p-2.5 text-neutral-400 hover:text-white lg:hidden"
+                className="shrink-0 rounded-xl bg-ink-card p-2.5 text-neutral-400 hover:text-white lg:hidden"
                 title="Open menu"
+                aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -547,157 +569,65 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
               {/* Notifications */}
               <div ref={bellRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setBellOpen((v) => !v)}
-                  className="relative rounded-xl bg-ink-card p-2.5 text-neutral-400 transition-colors duration-150 hover:text-white"
-                  title="Expiring soon"
+                  aria-expanded={bellOpen}
+                  aria-label="Notifications"
+                  className={`relative rounded-xl p-2.5 transition-all duration-200 active:scale-90 ${
+                    bellOpen ? 'bg-white/10 text-white' : 'bg-ink-card text-neutral-400 hover:text-white'
+                  }`}
+                  title="Notifications"
                 >
-                  <Bell className="h-5 w-5" />
+                  <Bell className={`h-5 w-5 transition-transform duration-200 ${bellOpen ? 'rotate-12' : ''}`} />
                   {unreadCount + newArrivalDrives.length > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                    <span
+                      key={unreadCount + newArrivalDrives.length}
+                      className="absolute -right-1 -top-1 flex h-5 min-w-[20px] animate-badge-pop items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white"
+                    >
                       {unreadCount + newArrivalDrives.length}
                     </span>
                   )}
                 </button>
                 {bellOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-72 animate-menu-fade rounded-xl border border-white/10 bg-ink-card p-1.5 shadow-menu sm:w-80">
-                    {/* New arrivals */}
-                    {recentArrivalDrives.length > 0 && (
-                      <>
-                        <p className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                          New arrivals
-                        </p>
-                        {recentArrivalDrives.slice(0, 5).map((d) => {
-                          const isSeen = seenIds.includes(d.id);
-                          return (
-                            <div
-                              key={d.id}
-                              className={`group flex w-full items-center gap-1 rounded-lg transition-colors duration-150 hover:bg-white/5 ${
-                                isSeen ? 'opacity-55' : ''
-                              }`}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleSelectDrive(d);
-                                  setBellOpen(false);
-                                }}
-                                className="flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 py-2 text-left"
-                              >
-                                <span className="flex min-w-0 items-center gap-2">
-                                  {!isSeen && (
-                                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-                                  )}
-                                  <span className="truncate text-xs font-semibold text-white">{d.company}</span>
-                                </span>
-                                {!isSeen && (
-                                  <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                                    NEW
-                                  </span>
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => dismissNotif(d.id)}
-                                title="Dismiss notification"
-                                className="mr-1 shrink-0 rounded-md p-1 text-neutral-600 opacity-0 transition-all duration-150 hover:bg-white/10 hover:text-white group-hover:opacity-100"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          );
-                        })}
-                        <div className="my-1 border-t border-white/10" />
-                      </>
-                    )}
-                    <div className="flex items-center justify-between px-2.5 py-1.5">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                        Expiring within 48h
-                      </p>
-                      {(expiringDrives.length > 0 || recentArrivalDrives.length > 0) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            markAllNotifRead(expiringDrives.map((d) => d.id));
-                            recentArrivalDrives.forEach((d) => markSeen(d.id));
-                          }}
-                          className="text-[11px] font-semibold text-violet-300 transition-colors duration-150 hover:text-white"
-                        >
-                          Mark all read
-                        </button>
-                      )}
-                    </div>
-                    {expiringDrives.length === 0 ? (
-                      <p className="px-2.5 py-3 text-xs text-neutral-500">Nothing urgent. All clear.</p>
-                    ) : (
-                      expiringDrives.slice(0, 6).map((d) => {
-                        const isRead = notifState.read.includes(d.id);
-                        return (
-                          <div
-                            key={d.id}
-                            className={`group flex w-full items-center gap-1 rounded-lg transition-colors duration-150 hover:bg-white/5 ${
-                              isRead ? 'opacity-55' : ''
-                            }`}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleSelectDrive(d);
-                                markNotifRead(d.id);
-                                setBellOpen(false);
-                              }}
-                              className="flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 py-2 text-left"
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                {!isRead && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brandviolet-hover" />}
-                                <span className="truncate text-xs font-semibold text-white">{d.company}</span>
-                              </span>
-                              <span className="shrink-0 text-[11px] font-bold text-orange-300">
-                                {formatDeadline(d.deadline, d.deadline_precision).countdownText}
-                              </span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => dismissNotif(d.id)}
-                              title="Dismiss notification"
-                              className="mr-1 shrink-0 rounded-md p-1 text-neutral-600 opacity-0 transition-all duration-150 hover:bg-white/10 hover:text-white group-hover:opacity-100"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        );
-                      })
-                    )}
-                    {(expiringDrives.length > 0 || recentArrivalDrives.length > 0) && (
-                      <div className="mt-1 border-t border-white/10 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            clearAllNotifs([
-                              ...expiringDrives.map((d) => d.id),
-                              ...recentArrivalDrives.map((d) => d.id),
-                            ]);
-                            setBellOpen(false);
-                          }}
-                          className="flex w-full items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-[11px] font-semibold text-neutral-500 transition-colors duration-150 hover:bg-white/5 hover:text-rose-300"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Clear all
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <NotificationPanel
+                    recentArrivals={recentArrivalDrives}
+                    expiring={expiringDrives}
+                    seenIds={seenIds}
+                    readIds={notifState.read}
+                    onSelectArrival={(d) => {
+                      handleSelectDrive(d);
+                      setBellOpen(false);
+                    }}
+                    onSelectExpiring={(d) => {
+                      handleSelectDrive(d);
+                      markNotifRead(d.id);
+                      setBellOpen(false);
+                    }}
+                    onDismiss={dismissNotif}
+                    onMarkAllRead={() => {
+                      markAllNotifRead(expiringDrives.map((d) => d.id));
+                      recentArrivalDrives.forEach((d) => markSeen(d.id));
+                    }}
+                    onClearAll={() => {
+                      clearAllNotifs([
+                        ...expiringDrives.map((d) => d.id),
+                        ...recentArrivalDrives.map((d) => d.id),
+                      ]);
+                      setBellOpen(false);
+                    }}
+                    onClose={() => setBellOpen(false)}
+                  />
                 )}
               </div>
 
               <button
                 onClick={handleManualSync}
                 disabled={isSyncingMails}
-                className="inline-flex items-center gap-2 rounded-xl bg-brandviolet px-3.5 py-2.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-brandviolet-hover active:scale-95 disabled:opacity-50 sm:px-4"
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brandviolet px-2.5 py-2.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-brandviolet-hover active:scale-95 disabled:opacity-50 sm:px-4"
                 title="Scan college Gmail for new announcements"
               >
                 <RefreshCw className={`h-4 w-4 ${isSyncingMails ? 'animate-spin' : ''}`} />
@@ -705,7 +635,7 @@ export default function DashboardPage() {
               </button>
 
               {user && (
-                <div className="flex items-center gap-2 rounded-xl bg-ink-card py-1.5 pl-1.5 pr-3">
+                <div className="flex shrink-0 items-center gap-2 rounded-xl bg-ink-card p-1.5 sm:py-1.5 sm:pl-1.5 sm:pr-3">
                   <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold text-violet-300">
                     {user.picture ? (
                       <img src={user.picture} alt={user.name} className="h-full w-full object-cover" />
@@ -732,7 +662,7 @@ export default function DashboardPage() {
           <StatCards drives={prefBase} />
 
           {coursePref.length > 0 && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
               <span className="text-neutral-500">Showing only:</span>
               {coursePref.map((deg) => (
                 <span
@@ -834,9 +764,9 @@ export default function DashboardPage() {
       />
 
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex animate-menu-fade items-center gap-2 rounded-xl border border-white/10 bg-ink-card px-4 py-3 text-xs font-semibold text-white shadow-menu">
-          <Check className="h-4 w-4 text-emerald-400" />
-          <span>{toastMessage}</span>
+        <div className="safe-bottom fixed bottom-4 left-4 right-4 z-50 flex animate-menu-fade items-center gap-2 rounded-xl border border-white/10 bg-ink-card px-4 py-3 text-xs font-semibold text-white shadow-menu sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm">
+          <Check className="h-4 w-4 shrink-0 text-emerald-400" />
+          <span className="min-w-0 break-words">{toastMessage}</span>
         </div>
       )}
     </div>

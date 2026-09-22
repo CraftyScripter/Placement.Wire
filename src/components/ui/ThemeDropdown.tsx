@@ -74,11 +74,11 @@ export const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="inline-flex items-center justify-between gap-2 rounded-full border border-white/10 bg-ink-input px-3.5 py-2 text-xs font-medium text-neutral-200 transition-colors duration-150 hover:bg-white/10 hover:text-white focus:border-brandviolet focus:outline-none"
+        className="inline-flex w-full max-w-full items-center justify-between gap-2 rounded-full border border-white/10 bg-ink-input px-3.5 py-2 text-xs font-medium text-neutral-200 transition-colors duration-150 hover:bg-white/10 hover:text-white focus:border-brandviolet focus:outline-none"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="flex items-center gap-1.5 truncate">
+        <span className="flex min-w-0 items-center gap-1.5 truncate">
           {PrefixIcon && <PrefixIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
           {label && <span className="text-slate-400 font-normal">{label}</span>}
           <span className="font-semibold text-white truncate">
@@ -102,7 +102,7 @@ export const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
                 ? { top: pos.top, left: pos.left }
                 : { top: -9999, left: -9999, visibility: 'hidden' }
             }
-            className={`fixed z-[100] min-w-[160px] rounded-xl border border-white/10 bg-ink-card p-1.5 shadow-menu animate-menu-fade focus:outline-none ${menuClassName}`}
+            className={`fixed z-[100] min-w-[160px] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-ink-card p-1.5 shadow-menu animate-menu-fade focus:outline-none ${menuClassName}`}
           >
             {options.map((option) => {
               const isSelected = option.value === value;

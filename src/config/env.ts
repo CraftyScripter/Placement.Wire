@@ -10,6 +10,8 @@ const envSchema = z.object({
   GOOGLE_REDIRECT_URI: z.string().default('http://localhost:8000/auth/google/callback'),
   ALLOWED_EMAIL_DOMAIN: z.string().default('saitm.ac.in'),
   DEV_MOCK_AUTH: z.string().transform((val) => val === 'true').default('false'),
+  CONTACT_FORM_API_URL: z.string().default('https://my-manager-eight.vercel.app/api/forms/placement-wire/submit'),
+  CONTACT_FORM_API_KEY: z.string().default(''),
 });
 
 export const env = envSchema.parse({
@@ -22,4 +24,6 @@ export const env = envSchema.parse({
   GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:8000/auth/google/callback',
   ALLOWED_EMAIL_DOMAIN: process.env.ALLOWED_EMAIL_DOMAIN || 'saitm.ac.in',
   DEV_MOCK_AUTH: process.env.DEV_MOCK_AUTH || 'false',
+  CONTACT_FORM_API_URL: process.env.CONTACT_FORM_API_URL || 'https://my-manager-eight.vercel.app/api/forms/placement-wire/submit',
+  CONTACT_FORM_API_KEY: process.env.CONTACT_FORM_API_KEY || '',
 });

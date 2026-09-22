@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -58,6 +58,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const settingsActive = pathname === '/settings';
+
+  // Lock background scroll while the mobile drawer is open.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
+  // Close the drawer on Escape.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseMobile();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [mobileOpen, onCloseMobile]);
 
   const navBtn =
     'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150';
@@ -148,22 +168,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* Desktop */}
-      <aside className="hidden w-[260px] shrink-0 lg:block">
-        <div className="sticky top-4 h-[calc(100vh-2rem)]">{content}</div>
+      <aside className="hidden w-[260px] shrink-0 lg:block xl:w-[280px] 3xl:w-[300px]">
+        <div className="sticky top-4 h-[calc(100vh-2rem)] 2xl:top-6 2xl:h-[calc(100vh-3rem)]">{content}</div>
       </aside>
 
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={onCloseMobile} />
-          <div className="absolute left-0 top-0 h-full w-[280px] p-2">
-            <div className="relative h-full">
+          <div
+            className="absolute inset-0 animate-overlay-fade bg-black/60"
+            onClick={onCloseMobile}
+          />
+          <div className="absolute left-0 top-0 h-full w-[280px] max-w-[85vw] animate-drawer-in p-2">
+            <div className="relative h-full overflow-hidden">
               {content}
               <button
                 type="button"
                 onClick={onCloseMobile}
                 className="absolute right-3 top-3 rounded-lg p-1.5 text-neutral-400 hover:bg-white/5 hover:text-white"
                 title="Close menu"
+                aria-label="Close menu"
               >
                 <X className="h-4 w-4" />
               </button>

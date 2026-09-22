@@ -59,7 +59,7 @@ export const PlacementCardView: React.FC<PlacementCardViewProps> = React.memo(({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 min-[560px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-3 sm:gap-4 3xl:gap-5">
       {drives.map((drive) => {
         const deadlineInfo = formatDeadline(drive.deadline, drive.deadline_precision);
         const categoryLabel = getCategoryLabel(drive.drive_type);
@@ -233,7 +233,7 @@ export const PlacementCardView: React.FC<PlacementCardViewProps> = React.memo(({
                         e.stopPropagation();
                         onApply(drive.id);
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-brandviolet px-3 py-1.5 text-xs font-semibold text-white hover:bg-brandviolet-hover active:scale-95 transition-colors duration-150"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-transparent bg-brandviolet px-3 py-1.5 text-xs font-semibold text-white hover:bg-brandviolet-hover active:scale-95 transition-colors duration-150"
                       title="Open official Google Form / registration link"
                     >
                       <Send className="h-3 w-3" />
@@ -241,7 +241,7 @@ export const PlacementCardView: React.FC<PlacementCardViewProps> = React.memo(({
                     </button>
                   ) : drive.apply_url && drive.status === 'NEW' && deadlineInfo.isExpired ? (
                     <span
-                      className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-neutral-500"
+                      className="inline-flex cursor-default items-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-neutral-500"
                       title="Application window closed"
                     >
                       Expired

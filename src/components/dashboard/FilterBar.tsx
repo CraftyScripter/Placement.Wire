@@ -78,10 +78,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   }, [filters.query]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Pills + search + controls */}
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="no-scrollbar -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
           {PILLS.map((pill) => {
             const isActive = activePill === pill.key;
             return (
@@ -89,7 +89,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 key={pill.key}
                 type="button"
                 onClick={() => onPillChange(pill.key)}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition-colors duration-150 ${
+                className={`shrink-0 whitespace-nowrap rounded-full px-3.5 sm:px-4 py-2 text-xs font-semibold transition-colors duration-150 ${
                   isActive
                     ? 'bg-brandviolet text-white'
                     : 'bg-ink-input text-neutral-400 hover:bg-white/10 hover:text-white'
@@ -101,8 +101,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           })}
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 xl:w-72 xl:flex-none">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-0 flex-1 basis-full min-[480px]:basis-auto min-[480px]:w-56 xl:w-72 xl:flex-none">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
             <input
               type="text"
@@ -122,23 +122,27 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             )}
           </div>
 
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 min-[480px]:flex-none">
           <ThemeDropdown
             value={filters.batch}
             options={BATCH_OPTIONS}
             onChange={(val) => onFilterChange({ ...filters, batch: val })}
+            className="min-w-0 flex-1 min-[480px]:flex-none"
           />
           <ThemeDropdown
             value={filters.sortBy}
             options={SORT_OPTIONS}
             onChange={(val) => onFilterChange({ ...filters, sortBy: val as SortOption })}
             prefixIcon={ArrowUpDown}
+            className="min-w-0 flex-1 min-[480px]:flex-none"
           />
 
-          <div className="flex items-center rounded-full border border-white/10 bg-ink-input p-1">
+          <div className="flex shrink-0 items-center rounded-full border border-white/10 bg-ink-input p-1">
             <button
               type="button"
               onClick={() => onViewModeChange('list')}
               title="List view"
+              aria-label="List view"
               className={`rounded-full p-2 transition-colors duration-150 ${
                 viewMode === 'list' ? 'bg-brandviolet text-white' : 'text-neutral-500 hover:text-white'
               }`}
@@ -149,6 +153,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               type="button"
               onClick={() => onViewModeChange('cards')}
               title="Cards view"
+              aria-label="Cards view"
               className={`rounded-full p-2 transition-colors duration-150 ${
                 viewMode === 'cards' ? 'bg-brandviolet text-white' : 'text-neutral-500 hover:text-white'
               }`}
@@ -156,13 +161,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <LayoutGrid className="h-4 w-4" />
             </button>
           </div>
+          </div>
         </div>
       </div>
 
       {/* Heading + count */}
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-bold text-white">{heading}</h2>
-        <span className="text-xs text-neutral-500">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="min-w-0 truncate text-base sm:text-lg font-bold text-white">{heading}</h2>
+        <span className="shrink-0 text-[11px] sm:text-xs text-neutral-500">
           {resultCount} {resultCount === 1 ? 'opportunity' : 'opportunities'} found
         </span>
       </div>

@@ -18,7 +18,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   if (type === 'no_filter_results') {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] p-12 text-center my-6">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] p-6 sm:p-12 text-center my-6">
         <div className="rounded-lg bg-white/[0.03] p-3.5 text-slate-400 mb-4 border border-white/10">
           <FilterX className="h-8 w-8 mx-auto" />
         </div>
@@ -39,7 +39,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] p-12 text-center my-6">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] p-6 sm:p-12 text-center my-6">
       <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/10 p-3.5 text-indigo-400 mb-4">
         <Mail className="h-8 w-8 mx-auto" />
       </div>

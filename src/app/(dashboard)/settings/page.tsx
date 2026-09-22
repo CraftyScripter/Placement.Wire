@@ -86,27 +86,28 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ink text-neutral-200 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-6xl space-y-5">
+    <div className="min-h-screen overflow-x-clip bg-ink text-neutral-200 p-3 min-[400px]:p-4 sm:p-6 lg:p-8 2xl:p-10">
+      <div className="mx-auto max-w-6xl xl:max-w-7xl 3xl:max-w-[1500px] space-y-4 sm:space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">Settings</h1>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">Settings</h1>
             <p className="mt-0.5 text-xs text-neutral-500">
               Profile, storage, course preferences and session.
             </p>
           </div>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-card px-3.5 py-2 text-xs font-semibold text-neutral-200 transition-colors duration-150 hover:border-white/20 hover:text-white"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-ink-card px-3.5 py-2 text-xs font-semibold text-neutral-200 transition-colors duration-150 hover:border-white/20 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
+            <span className="hidden min-[400px]:inline">Back to Dashboard</span>
+            <span className="min-[400px]:hidden">Back</span>
           </Link>
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-2">
-          <div className="space-y-4">
-        <div className="rounded-xl border border-white/10 bg-ink-card p-5 space-y-4">
+        <div className="grid items-start gap-3 sm:gap-4 lg:grid-cols-2">
+          <div className="min-w-0 space-y-3 sm:space-y-4">
+        <div className="rounded-xl border border-white/10 bg-ink-card p-4 sm:p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-white/10 pb-3">
             <User className="h-4 w-4 text-violet-300" />
             <h2 className="text-sm font-bold text-white">College Identity</h2>
@@ -136,7 +137,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-ink-card p-5 space-y-4">
+        <div className="rounded-xl border border-white/10 bg-ink-card p-4 sm:p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-white/10 pb-3">
             <HardDrive className="h-4 w-4 text-violet-300" />
             <h2 className="text-sm font-bold text-white">Drive Storage</h2>
@@ -146,7 +147,7 @@ export default function SettingsPage() {
             Records, notes and statuses live in your personal Google Drive. No central database.
           </p>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3 text-xs">
             <div className="rounded-lg border border-white/10 bg-white/5 p-3">
               <span className="text-[11px] text-neutral-500">Folder</span>
               <span className="font-mono text-xs font-semibold text-neutral-300 block mt-1 break-all">
@@ -171,7 +172,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
 
         {/* Course Preferences */}
-        <div className="rounded-xl border border-white/10 bg-ink-card p-5 space-y-4">
+        <div className="rounded-xl border border-white/10 bg-ink-card p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4 text-violet-300" />
