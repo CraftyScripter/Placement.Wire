@@ -271,10 +271,10 @@ export default function DashboardPage() {
         showToast('All placement emails are up to date! No new drives found.');
       } else if (res.hasMore && res.remainingCount > 0) {
         showToast(
-          `Synced: ${res.addedCount} new, ${res.updatedCount} updated (${res.remainingCount} older emails remaining in mailbox).`
+          `Synced: ${res.addedCount} new, ${res.updatedCount} updated (${res.remainingCount} older emails remaining in mailbox). Total: ${res.totalDrives}.`
         );
       } else {
-        showToast(`All caught up! Synced ${res.addedCount} new drives (${res.updatedCount} updated).`);
+        showToast(`All caught up! Synced ${res.addedCount} new drives (${res.updatedCount} updated). Total: ${res.totalDrives}.`);
       }
     } else {
       showToast(res?.error || 'Could not scan mailbox. Check Google authorization.');

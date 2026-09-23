@@ -293,6 +293,7 @@ export function usePlacements() {
         success: true,
         addedCount: totalAdded,
         updatedCount: totalUpdated,
+        totalDrives: liveDrives.length,
         hasMore: false,
         remainingCount: 0,
         warning: lastWarning,
