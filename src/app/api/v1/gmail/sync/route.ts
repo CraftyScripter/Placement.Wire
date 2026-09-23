@@ -7,6 +7,10 @@ import { getSamplePlacementDrives } from '@/lib/parser/fixtures';
 import { PlacementDrive, createEmptyPlacementFile } from '@/schemas/placement.schema';
 
 export const dynamic = 'force-dynamic';
+// Gmail detail fetch + Drive read/write can exceed the default 10s Hobby
+// limit when processing a full 25-mail batch. Allow up to 60s per sync
+// invocation; the client chains invocations until hasMore=false.
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth();

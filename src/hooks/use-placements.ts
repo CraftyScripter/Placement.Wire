@@ -225,57 +225,77 @@ export function usePlacements() {
     [drives, updateStatus]
   );
 
-  // Trigger Gmail Sync
+  // Trigger Gmail Sync — drains the mailbox by chaining sync invocations
+  // until the server reports hasMore=false. The server caps each invocation
+  // at 25 new mails (Gmail quota protection), so a single POST can never
+  // fetch 60 mails at once; without this loop production always lags behind
+  // a localhost whose Drive file was built up over many manual syncs.
   const syncMails = useCallback(async () => {
     setIsSyncingMails(true);
     setSyncError(null);
 
     try {
-      const liveDrives = latestDrivesRef.current.length > 0 ? latestDrivesRef.current : drives;
-      const res = await fetch('/api/v1/gmail/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentDrives: liveDrives }),
-      });
+      let liveDrives = latestDrivesRef.current.length > 0 ? latestDrivesRef.current : drives;
+      let totalAdded = 0;
+      let totalUpdated = 0;
+      let lastWarning: string | undefined;
+      let lastSynced: string | null = null;
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.message || 'Gmail sync failed');
-      }
+      // At most 10 chained calls = up to 250 mails per button press.
+      for (let i = 0; i < 10; i++) {
+        const res = await fetch('/api/v1/gmail/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentDrives: liveDrives }),
+        });
 
-      const json = await res.json();
-
-      if (json.warning) {
-        setSyncError(json.warning);
-      }
-
-      if (Array.isArray(json.drives)) {
-        setDrives(json.drives);
-        latestDrivesRef.current = json.drives;
-        setLastSyncedAt(json.syncedAt || new Date().toISOString());
-        setSyncState('synced');
-
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({
-              app: 'PlacementWire',
-              version: '1.0',
-              last_synced_at: json.syncedAt,
-              revision,
-              drives: json.drives,
-            })
-          );
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.message || 'Gmail sync failed');
         }
+
+        const json = await res.json();
+
+        if (json.warning) {
+          lastWarning = json.warning;
+          setSyncError(json.warning);
+        }
+
+        totalAdded += json.addedCount || 0;
+        totalUpdated += json.updatedCount || 0;
+
+        if (Array.isArray(json.drives)) {
+          liveDrives = json.drives;
+          setDrives(json.drives);
+          latestDrivesRef.current = json.drives;
+          lastSynced = json.syncedAt || new Date().toISOString();
+          setLastSyncedAt(lastSynced);
+          setSyncState('synced');
+
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({
+                app: 'PlacementWire',
+                version: '1.0',
+                last_synced_at: lastSynced,
+                revision,
+                drives: json.drives,
+              })
+            );
+          }
+        }
+
+        if (!json.hasMore || (json.remainingCount || 0) <= 0) break;
       }
 
       return {
         success: true,
-        addedCount: json.addedCount || 0,
-        updatedCount: json.updatedCount || 0,
-        hasMore: Boolean(json.hasMore),
-        remainingCount: typeof json.remainingCount === 'number' ? json.remainingCount : 0,
-        warning: json.warning,
+        addedCount: totalAdded,
+        updatedCount: totalUpdated,
+        hasMore: false,
+        remainingCount: 0,
+        warning: lastWarning,
       };
     } catch (err: any) {
       console.error('Manual Gmail sync error:', err);
