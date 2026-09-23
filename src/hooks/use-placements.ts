@@ -40,8 +40,13 @@ export function usePlacements() {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed.drives)) {
-            cachedDrives = parsed.drives;
-            setDrives(parsed.drives);
+            const valid = parsed.drives.filter((d: PlacementDrive) => {
+              const s = d.source?.sender?.toLowerCase() || '';
+              return s.includes('placements@saitm.org') || s.includes('placements@saitm.ac.in');
+            });
+            cachedDrives = valid;
+            setDrives(valid);
+            latestDrivesRef.current = valid;
             setLastSyncedAt(parsed.last_synced_at || null);
             setRevision(parsed.revision || 1);
             setIsLoading(false);
@@ -58,7 +63,12 @@ export function usePlacements() {
         if (!res.ok) throw new Error('Failed to fetch from Google Drive');
         const json = await res.json();
         if (json.data && Array.isArray(json.data.drives)) {
-          setDrives(json.data.drives);
+          const valid = json.data.drives.filter((d: PlacementDrive) => {
+            const s = d.source?.sender?.toLowerCase() || '';
+            return s.includes('placements@saitm.org') || s.includes('placements@saitm.ac.in');
+          });
+          setDrives(valid);
+          latestDrivesRef.current = valid;
           setLastSyncedAt(json.data.last_synced_at);
           setRevision(json.data.revision || 1);
           setSyncState('synced');
@@ -221,10 +231,11 @@ export function usePlacements() {
     setSyncError(null);
 
     try {
+      const liveDrives = latestDrivesRef.current.length > 0 ? latestDrivesRef.current : drives;
       const res = await fetch('/api/v1/gmail/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentDrives: drives }),
+        body: JSON.stringify({ currentDrives: liveDrives }),
       });
 
       if (!res.ok) {
@@ -240,6 +251,7 @@ export function usePlacements() {
 
       if (Array.isArray(json.drives)) {
         setDrives(json.drives);
+        latestDrivesRef.current = json.drives;
         setLastSyncedAt(json.syncedAt || new Date().toISOString());
         setSyncState('synced');
 
@@ -261,13 +273,15 @@ export function usePlacements() {
         success: true,
         addedCount: json.addedCount || 0,
         updatedCount: json.updatedCount || 0,
+        hasMore: Boolean(json.hasMore),
+        remainingCount: typeof json.remainingCount === 'number' ? json.remainingCount : 0,
         warning: json.warning,
       };
     } catch (err: any) {
       console.error('Manual Gmail sync error:', err);
       const message = err?.message || 'Gmail sync failed. Check your connection.';
       setSyncError(message);
-      return { success: false, addedCount: 0, updatedCount: 0, error: message };
+      return { success: false, addedCount: 0, updatedCount: 0, hasMore: false, remainingCount: 0, error: message };
     } finally {
       setIsSyncingMails(false);
     }

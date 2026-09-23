@@ -18,79 +18,100 @@ const config: Config = {
     },
     extend: {
       colors: {
-        // Dashboard palette (target redesign)
-        ink: {
-          DEFAULT: "#0e0e0e",
-          sidebar: "#121212",
-          card: "#1e1e1e",
-          row: "#242424",
-          input: "#2a2a2a",
-        },
-        brandviolet: {
-          DEFAULT: "#7c3aed",
-          hover: "#8b5cf6",
-        },
-        // Flat design tokens
-        surface: {
-          DEFAULT: "#11141a",
-          hover: "#161a22",
-        },
-        line: "rgba(255, 255, 255, 0.10)",
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
-        },
-        popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
-        },
+        // DESIGN.md — Theme Selection (bright marketplace)
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-        },
-        secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
-        },
-        muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
+          DEFAULT: "#6E66ED",
+          hover: "#5A54D1",
+          soft: "var(--primary-soft)",
+          50: "#EFEDFE",
+          100: "#E0DDfd",
+          500: "#6E66ED",
+          600: "#5A54D1",
+          700: "#4843B0",
         },
         accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: "#FCAD32",
+          hover: "#E89B1F",
+          soft: "var(--accent-soft)",
+        },
+        inktext: "var(--inktext)",
+        canvas: "var(--canvas)",
+        muted: {
+          DEFAULT: "var(--muted)",
+        },
+        line: "var(--line)",
+        success: {
+          DEFAULT: "#21C56E",
+          soft: "var(--success-soft)",
+        },
+        error: {
+          DEFAULT: "#FF4D4F",
+          soft: "var(--error-soft)",
+        },
+        // Legacy aliases — remapped to light so old classes flip automatically.
+        // New code should use primary/accent/canvas/inktext/line directly.
+        ink: {
+          DEFAULT: "#F9F9FB",
+          sidebar: "#FFFFFF",
+          card: "#FFFFFF",
+          row: "#FFFFFF",
+          input: "#FFFFFF",
+        },
+        brandviolet: {
+          DEFAULT: "#6E66ED",
+          hover: "#5A54D1",
+        },
+        surface: {
+          DEFAULT: "#F9F9FB",
+          hover: "#F1F1F5",
+        },
+        background: "#F9F9FB",
+        foreground: "#323243",
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--inktext)",
+        },
+        popover: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--inktext)",
+        },
+        secondary: {
+          DEFAULT: "#323243",
+          foreground: "#FFFFFF",
         },
         destructive: {
-          DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)",
+          DEFAULT: "#FF4D4F",
+          foreground: "#FFFFFF",
         },
-        border: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
+        border: "var(--line)",
+        input: "var(--line)",
+        ring: "#6E66ED",
         brand: {
-          50: "#f0fdf4",
-          100: "#dcfce7",
-          500: "#22c55e",
-          600: "#16a34a",
-          dark: "#0a0d14",
-          card: "#121722",
-          border: "#1f293d",
+          50: "#E6F9EF",
+          100: "#EFEDFE",
+          500: "#21C56E",
+          600: "#6E66ED",
+          dark: "#323243",
+          card: "#FFFFFF",
+          border: "#E5E7EB",
         },
+      },
+      fontFamily: {
+        sans: ["var(--font-outfit)", "Outfit", "system-ui", "sans-serif"],
+        outfit: ["var(--font-outfit)", "Outfit", "system-ui", "sans-serif"],
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        none: "0px",
+        sm: "4px",
+        md: "6px",
+        lg: "8px",
+        xl: "12px",
+        full: "9999px",
       },
       boxShadow: {
-        menu: "0 8px 24px -6px rgba(0, 0, 0, 0.45)",
+        menu: "0 8px 24px -6px rgba(50, 50, 67, 0.12)",
+        card: "0 1px 2px rgba(50, 50, 67, 0.06)",
+        pop: "0 12px 32px -8px rgba(50, 50, 67, 0.18)",
       },
       keyframes: {
         menuFade: {

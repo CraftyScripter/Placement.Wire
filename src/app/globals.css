@@ -4,32 +4,72 @@
 
 @layer base {
   :root {
+    --background: 0 0% 100%;
+    --foreground: 240 7% 20%;
+    --card: #FFFFFF;
+    --card-foreground: #323243;
+    --popover: #FFFFFF;
+    --popover-foreground: #323243;
+    --primary: #6E66ED;
+    --primary-hover: #5A54D1;
+    --primary-soft: #EFEDFE;
+    --accent: #FCAD32;
+    --accent-hover: #E89B1F;
+    --accent-soft: #FEF3DF;
+    --canvas: #F9F9FB;
+    --line: #E5E7EB;
+    --inktext: #323243;
+    --muted: #6E6E85;
+    --success: #21C56E;
+    --success-soft: #E6F9EF;
+    --error: #FF4D4F;
+    --error-soft: #FDECEC;
+    --border: #E5E7EB;
+    --input: #E5E7EB;
+    --ring: #6E66ED;
+    --radius: 6px;
+  }
+
+  html.dark,
+  :root.dark,
+  .dark {
     --background: 224 71% 4%;
     --foreground: 210 20% 98%;
-    --card: 224 71% 6%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71% 6%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27% 12%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27% 12%;
-    --muted-foreground: 217 19% 65%;
-    --accent: 215 27% 15%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27% 15%;
-    --input: 215 27% 15%;
-    --ring: 239 84% 67%;
-    --radius: 0.5rem;
+    --card: #141824;
+    --card-foreground: #F3F4F6;
+    --popover: #141824;
+    --popover-foreground: #F3F4F6;
+    --primary: #6E66ED;
+    --primary-hover: #7E77F3;
+    --primary-soft: rgba(110, 102, 237, 0.18);
+    --accent: #FCAD32;
+    --accent-hover: #FDBA54;
+    --accent-soft: rgba(252, 173, 50, 0.16);
+    --canvas: #0B0E14;
+    --line: #1F2430;
+    --inktext: #E2E4ED;
+    --muted: #94A3B8;
+    --success: #21C56E;
+    --success-soft: rgba(33, 197, 110, 0.16);
+    --error: #FF4D4F;
+    --error-soft: rgba(255, 77, 79, 0.16);
+    --border: #1F2430;
+    --input: #1F2430;
+    --ring: #6E66ED;
+    color-scheme: dark;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--line);
+  }
+  html {
+    background-color: var(--canvas);
+    color: var(--inktext);
+  }
+  html.dark {
+    background-color: #0B0E14;
   }
   html,
   body {
@@ -37,9 +77,9 @@
     max-width: 100vw;
   }
   body {
-    font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: #0a0c10;
-    color: #e5e7eb;
+    font-family: var(--font-outfit), "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--canvas);
+    color: var(--inktext);
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
   }
@@ -48,9 +88,62 @@
   svg {
     max-width: 100%;
   }
+  ::selection {
+    background: rgba(110, 102, 237, 0.25);
+    color: var(--inktext);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50;
+    min-height: 40px;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-line bg-white px-4 py-2 text-sm font-medium text-[#323243] shadow-card transition-all duration-150 hover:border-primary hover:text-primary active:scale-[0.98] disabled:opacity-50 dark:border-white/10 dark:bg-[#141824] dark:text-[#E2E4ED] dark:hover:border-primary;
+    min-height: 40px;
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[#1f1f2e] shadow-sm transition-all duration-150 hover:bg-accent-hover active:scale-[0.98] disabled:opacity-50;
+    min-height: 40px;
+  }
+  .card-base {
+    @apply rounded-lg border border-line bg-white text-[#323243] shadow-card transition-colors duration-150 dark:border-white/10 dark:bg-[#141824] dark:text-[#E2E4ED];
+  }
+  .input-base {
+    @apply rounded-md border border-line bg-white px-3.5 text-sm font-normal text-[#323243] placeholder:text-muted focus:border-primary focus:outline-none transition-colors dark:border-white/10 dark:bg-[#141824] dark:text-[#E2E4ED] dark:placeholder:text-[#94A3B8];
+    height: 40px;
+  }
+  .chip-base {
+    @apply inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-medium text-primary dark:bg-primary/20 dark:text-primary-100;
+  }
+  .overline-tag {
+    @apply text-xs font-semibold uppercase tracking-[0.08em];
+  }
 }
 
 @layer utilities {
+  html.dark,
+  html.dark body,
+  .dark .bg-canvas {
+    background-color: #0B0E14 !important;
+  }
+  .dark .bg-white:not([data-keep-light="true"]) {
+    background-color: var(--card) !important;
+  }
+  .dark .text-\[\#323243\] {
+    color: var(--inktext) !important;
+  }
+  .dark .border-line {
+    border-color: var(--line) !important;
+  }
+  .dark .shadow-card {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  }
+  .dark .shadow-pop {
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.8);
+  }
+
   /* Hide scrollbars for horizontal pill/tab rails while keeping scroll */
   .no-scrollbar {
     -ms-overflow-style: none;
@@ -64,7 +157,7 @@
   }
 }
 
-/* Respect users who prefer reduced motion (drawer/modal/pill animations off) */
+/* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -75,18 +168,25 @@
   }
 }
 
-/* Subtle scrollbar */
+/* Subtle scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.22);
+  background: #d6d6de;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: #b9b9c7;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #232838;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #333a50;
 }

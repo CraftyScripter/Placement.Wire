@@ -42,6 +42,9 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('pw_panel_synced');
+      }
       await fetch('/api/v1/auth/logout', { method: 'POST' });
     } finally {
       setUser(null);

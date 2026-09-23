@@ -1,13 +1,23 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import {
+  ChevronDown,
+  Globe2,
+  Laptop,
+  MapPin,
+  MousePointerClick,
+  ShieldCheck,
+  User,
+  Users,
+} from 'lucide-react';
 import { useAdminOverview } from '@/hooks/use-admin-overview';
-import { Card, CardTitle, fmtTime } from '@/components/admin/ui';
+import { Card, CardTitle, SearchInput, fmtNumber, fmtTime } from '@/components/admin/ui';
 import type { Visitor } from '@/lib/analytics/store';
 
-function who(v: Visitor): string {
-  return v.email || `anonymous · ${v.key.slice(5, 11)}`;
+function formatIdentity(v: Visitor): { name: string; isAnon: boolean } {
+  if (v.email) return { name: v.email, isAnon: false };
+  return { name: `Anonymous (${v.key.slice(5, 11)})`, isAnon: true };
 }
 
 function locOf(v: Visitor): string {
@@ -26,7 +36,7 @@ export default function AdminVisitorsPage() {
     if (!q) return all;
     return all.filter(
       (v) =>
-        who(v).toLowerCase().includes(q) ||
+        formatIdentity(v).name.toLowerCase().includes(q) ||
         (v.name || '').toLowerCase().includes(q) ||
         (v.city || '').toLowerCase().includes(q) ||
         (v.country || '').toLowerCase().includes(q) ||
@@ -35,92 +45,170 @@ export default function AdminVisitorsPage() {
   }, [data, query]);
 
   return (
-    <div className="space-y-4">
-      <header>
-        <h1 className="text-xl font-extrabold text-white sm:text-2xl">Visitors</h1>
-        <p className="text-xs text-neutral-500">
-          Grouped — one row per visitor no matter how many pages they open. Expand a row for the
-          per-page breakdown.
-        </p>
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+              Student Directory & Visitor Profiles
+            </h1>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary dark:bg-primary/20">
+              {list.length} Profiles
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
+            Detailed visitor analytics, activity history, and page journey records. Click any row to view visited pages.
+          </p>
+        </div>
       </header>
 
-      <Card>
-        <CardTitle
-          right={
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search email, city, IP..."
-              className="w-full max-w-xs rounded-xl border border-white/10 bg-ink px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:border-amber-500/50 focus:outline-none"
-            />
-          }
-        >
-          All visitors ({list.length})
-        </CardTitle>
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-xs">
+      <Card noPadding>
+        {/* Table Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 p-4 dark:border-[#1F2430]">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-bold text-slate-800 dark:text-[#E2E4ED]">
+              All Tracked Visitors
+            </h2>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-[#1F2430] dark:text-[#94A3B8]">
+              {list.length} {list.length === 1 ? 'record' : 'records'}
+            </span>
+          </div>
+
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search email, name, city, IP..."
+            className="w-full sm:w-72"
+          />
+        </div>
+
+        {/* Visitors Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[780px] text-left text-xs">
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-neutral-500">
-                <th className="px-2 py-2">Who</th>
-                <th className="px-2 py-2">Visits</th>
-                <th className="px-2 py-2">Sessions</th>
-                <th className="px-2 py-2">First seen</th>
-                <th className="px-2 py-2">Last active</th>
-                <th className="px-2 py-2">Location</th>
-                <th className="px-2 py-2">IP</th>
+              <tr className="border-b border-slate-200/80 bg-slate-50/75 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-[#1F2430] dark:bg-[#0F131D] dark:text-[#94A3B8]">
+                <th className="px-4 py-3">Student / Identity</th>
+                <th className="px-4 py-3">Total Visits</th>
+                <th className="px-4 py-3">Sessions</th>
+                <th className="px-4 py-3">First Seen</th>
+                <th className="px-4 py-3">Last Active</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">Last IP</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100 dark:divide-[#1F2430]">
               {list.map((v) => {
+                const { name: identityName, isAnon } = formatIdentity(v);
                 const pages = Object.entries(v.pages).sort((a, b) => b[1].count - a[1].count);
                 const isOpen = open === v.key;
+
                 return (
                   <React.Fragment key={v.key}>
                     <tr
-                      className="cursor-pointer border-t border-white/5 hover:bg-white/[0.02]"
+                      className={`cursor-pointer transition-colors duration-150 hover:bg-slate-50/80 dark:hover:bg-[#1A202E]/60 ${
+                        isOpen ? 'bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
                       onClick={() => setOpen(isOpen ? null : v.key)}
                     >
-                      <td className="px-2 py-2">
-                        <p className="flex items-center gap-1 font-semibold text-white">
+                      {/* Identity */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
                           <ChevronDown
-                            className={`h-3.5 w-3.5 text-neutral-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                              isOpen ? 'rotate-180 text-primary' : ''
+                            }`}
                           />
-                          {who(v)}
-                          {v.isAdmin && (
-                            <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
-                              ADMIN
-                            </span>
-                          )}
-                        </p>
-                        <p className="pl-5 text-[11px] text-neutral-500">
-                          {[v.name, v.device].filter(Boolean).join(' · ')}
-                        </p>
+                          <div
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+                              isAnon
+                                ? 'bg-slate-100 text-slate-600 dark:bg-[#1F2430] dark:text-[#94A3B8]'
+                                : 'bg-primary/10 text-primary dark:bg-primary/20'
+                            }`}
+                          >
+                            {isAnon ? <User className="h-4 w-4" /> : identityName[0].toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="truncate font-semibold text-slate-800 dark:text-[#E2E4ED]" title={identityName}>
+                                {identityName}
+                              </p>
+                              {v.isAdmin && (
+                                <span className="rounded-full bg-amber-500/10 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                                  ADMIN
+                                </span>
+                              )}
+                            </div>
+                            <p className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-[#64748B]">
+                              <span>{[v.name, v.device].filter(Boolean).join(' · ') || 'Web Browser'}</span>
+                            </p>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-2 py-2 font-bold text-white">{v.totalVisits}</td>
-                      <td className="px-2 py-2 text-neutral-300">{v.sessions}</td>
-                      <td className="whitespace-nowrap px-2 py-2 text-neutral-400">{fmtTime(v.firstSeen)}</td>
-                      <td className="whitespace-nowrap px-2 py-2 text-neutral-400">{fmtTime(v.lastActive)}</td>
-                      <td className="px-2 py-2 text-neutral-400">{locOf(v)}</td>
-                      <td className="px-2 py-2 font-mono text-[11px] text-neutral-500">{v.lastIp || '—'}</td>
+
+                      {/* Total Visits */}
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-slate-900 dark:text-white">
+                        {fmtNumber(v.totalVisits)}
+                      </td>
+
+                      {/* Sessions */}
+                      <td className="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-300">
+                        {fmtNumber(v.sessions)}
+                      </td>
+
+                      {/* First Seen */}
+                      <td className="whitespace-nowrap px-4 py-3 text-[11px] text-slate-500 dark:text-[#94A3B8]">
+                        {fmtTime(v.firstSeen)}
+                      </td>
+
+                      {/* Last Active */}
+                      <td className="whitespace-nowrap px-4 py-3 text-[11px] text-slate-500 dark:text-[#94A3B8]">
+                        {fmtTime(v.lastActive)}
+                      </td>
+
+                      {/* Location */}
+                      <td className="px-4 py-3 text-[11px] text-slate-600 dark:text-[#94A3B8]">
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3 w-3 shrink-0 text-slate-400" />
+                          <span>{locOf(v)}</span>
+                        </span>
+                      </td>
+
+                      {/* IP */}
+                      <td className="px-4 py-3 font-mono text-[11px] text-slate-500 dark:text-[#94A3B8]">
+                        {v.lastIp || '—'}
+                      </td>
                     </tr>
+
+                    {/* Expandable row: Visited Pages Breakdown */}
                     {isOpen && (
-                      <tr className="border-t border-white/5 bg-white/[0.015]">
-                        <td colSpan={7} className="px-2 py-2 pl-8">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                            Pages visited ({pages.length})
-                          </p>
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            {pages.map(([p, s]) => (
-                              <span
-                                key={p}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1 font-mono text-[11px] text-neutral-300"
-                                title={`Last opened ${fmtTime(s.lastSeen)}`}
+                      <tr className="border-t border-slate-100 bg-slate-50/50 dark:border-[#1F2430] dark:bg-[#0B0E14]/40">
+                        <td colSpan={7} className="px-6 py-4">
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <MousePointerClick className="h-3.5 w-3.5 text-primary" />
+                            <span>Visited Pages History ({pages.length} unique routes)</span>
+                          </div>
+
+                          <div className="mt-2.5 flex flex-wrap gap-2">
+                            {pages.map(([pathName, stat]) => (
+                              <div
+                                key={pathName}
+                                className="group flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-3 py-1.5 shadow-sm dark:border-[#1F2430] dark:bg-[#141824]"
+                                title={`Last visited: ${fmtTime(stat.lastSeen)}`}
                               >
-                                {p}
-                                <span className="font-bold text-amber-300">×{s.count}</span>
-                              </span>
+                                <span className="font-mono text-xs font-semibold text-slate-700 dark:text-[#E2E4ED]">
+                                  {pathName}
+                                </span>
+                                <span className="rounded-md bg-primary/10 px-1.5 py-0.2 font-mono text-[10px] font-bold text-primary dark:bg-primary/20">
+                                  ×{stat.count}
+                                </span>
+                              </div>
                             ))}
-                            {pages.length === 0 && <span className="text-[11px] text-neutral-600">No pageviews.</span>}
+                            {pages.length === 0 && (
+                              <p className="text-xs text-slate-400 dark:text-slate-500">
+                                No page view details recorded.
+                              </p>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -128,10 +216,11 @@ export default function AdminVisitorsPage() {
                   </React.Fragment>
                 );
               })}
+
               {list.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-2 py-6 text-center text-neutral-500">
-                    {loading ? 'Loading...' : 'No visitors match.'}
+                  <td colSpan={7} className="px-4 py-12 text-center text-xs text-slate-400 dark:text-slate-500">
+                    {loading ? 'Fetching visitors...' : 'No visitors matched your search query.'}
                   </td>
                 </tr>
               )}

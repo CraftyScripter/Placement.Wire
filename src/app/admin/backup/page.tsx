@@ -1,9 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, CheckCircle2, CloudUpload, Download, KeyRound } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CloudUpload,
+  Database,
+  Download,
+  FileSpreadsheet,
+  HardDrive,
+  KeyRound,
+  ShieldCheck,
+} from 'lucide-react';
 import { useAdminOverview } from '@/hooks/use-admin-overview';
-import { Card, CardTitle, Stat, fmtBytes, fmtTime } from '@/components/admin/ui';
+import { Card, CardTitle, Stat, fmtBytes, fmtNumber, fmtTime } from '@/components/admin/ui';
 
 export default function AdminBackupPage() {
   const { data } = useAdminOverview();
@@ -27,14 +37,14 @@ export default function AdminBackupPage() {
       const json = await res.json();
       if (res.ok && json.success) {
         setState('done');
-        setMsg(`Saved to your Drive as ${json.fileName || 'admin_analytics.json'}.`);
+        setMsg(`Successfully backed up to your Google Drive as "${json.fileName || 'admin_analytics.json'}".`);
       } else {
         setState('error');
-        setMsg(json.message || 'Backup failed.');
+        setMsg(json.message || 'Backup process failed.');
       }
     } catch {
       setState('error');
-      setMsg('Backup failed — network error.');
+      setMsg('Backup process failed due to a network error.');
     }
   };
 
@@ -61,7 +71,8 @@ export default function AdminBackupPage() {
 
   const exportCsv = () => {
     if (!data) return;
-    const head = 'key,email,name,first_seen,last_active,visits,sessions,session_secs,logins,last_login,ip,location,device,referrer,is_admin,top_pages';
+    const head =
+      'key,email,name,first_seen,last_active,visits,sessions,session_secs,logins,last_login,ip,location,device,referrer,is_admin,top_pages';
     const lines = data.visitors.map((v) => {
       const pages = Object.entries(v.pages)
         .sort((a, b) => b[1].count - a[1].count)
@@ -70,10 +81,22 @@ export default function AdminBackupPage() {
         .join(' | ');
       const q = (s: string | null | undefined) => `"${(s || '').replace(/"/g, '""')}"`;
       return [
-        v.key, v.email || '', q(v.name), v.firstSeen, v.lastActive,
-        v.totalVisits, v.sessions, v.sessionSecs, v.loginCount, v.lastLogin || '',
-        v.lastIp || '', q([v.city, v.country || v.region].filter(Boolean).join(', ')),
-        q(v.device), v.referrer || '', v.isAdmin ? 'yes' : 'no', q(pages),
+        v.key,
+        v.email || '',
+        q(v.name),
+        v.firstSeen,
+        v.lastActive,
+        v.totalVisits,
+        v.sessions,
+        v.sessionSecs,
+        v.loginCount,
+        v.lastLogin || '',
+        v.lastIp || '',
+        q([v.city, v.country || v.region].filter(Boolean).join(', ')),
+        q(v.device),
+        v.referrer || '',
+        v.isAdmin ? 'yes' : 'no',
+        q(pages),
       ].join(',');
     });
     const blob = new Blob([[head, ...lines].join('\n')], { type: 'text/csv' });
@@ -86,133 +109,200 @@ export default function AdminBackupPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <header>
-        <h1 className="text-xl font-extrabold text-white sm:text-2xl">Backup</h1>
-        <p className="text-xs text-neutral-500">
-          Local log file + compact copy in your own Google Drive. No MongoDB anywhere.
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+              Analytics Storage & Cloud Backup
+            </h1>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary dark:bg-primary/20">
+              System
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
+            Local disk persistence status, one-click Google Drive sync, and CSV data export.
+          </p>
+        </div>
       </header>
 
-      {/* Storage backend status — this is what explains empty dashboards */}
+      {/* Storage Backend Status Banner */}
       {storage && (
         <div
-          className={`flex items-start gap-2.5 rounded-2xl border px-4 py-3 text-xs leading-relaxed ${
+          className={`flex items-start gap-3 rounded-xl border p-4 text-xs leading-relaxed shadow-sm transition-all ${
             storage.mode === 'disk'
-              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+              ? 'border-emerald-200 bg-emerald-50/70 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:text-emerald-300'
               : storage.mode === 'drive'
-                ? 'border-sky-500/30 bg-sky-500/10 text-sky-200'
-                : 'border-rose-500/30 bg-rose-500/10 text-rose-200'
+              ? 'border-primary/20 bg-primary/10 text-primary dark:border-primary/30 dark:bg-primary/20 dark:text-primary'
+              : 'border-rose-200 bg-rose-50/70 text-rose-800 dark:border-rose-800/40 dark:bg-rose-950/30 dark:text-rose-300'
           }`}
         >
           {storage.mode === 'none' ? (
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
           ) : (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           )}
           <div>
-            <p className="font-bold">
-              {storage.mode === 'disk' && 'Storage: local disk — logging works.'}
-              {storage.mode === 'drive' && 'Storage: your Google Drive — logging works (serverless mode).'}
-              {storage.mode === 'none' && 'Storage: NOTHING is being saved — fix Drive logging below.'}
+            <p className="font-bold text-sm">
+              {storage.mode === 'disk' && 'Storage Status: Local Disk Active (Logging Operational)'}
+              {storage.mode === 'drive' && 'Storage Status: Google Drive Cloud Active (Serverless Mode)'}
+              {storage.mode === 'none' && 'Storage Warning: No Writable Storage Found'}
             </p>
-            <p className="mt-0.5 opacity-80">{storage.detail}</p>
+            <p className="mt-1 text-xs opacity-90">{storage.detail}</p>
           </div>
         </div>
       )}
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Log size" value={data ? fmtBytes(data.fileBytes) : '—'} sub={storage?.mode === 'drive' ? 'in your Drive' : 'data/analytics.json'} />
-        <Stat label="Visitor rows" value={data?.totals.visitors ?? '—'} sub="grouped, not raw events" />
-        <Stat label="Last updated" value={data ? fmtTime(data.updatedAt) : '—'} sub="server time" />
-        <Stat label="Retention" value="30d / 90d" sub="daily rollups / stale anon prune" />
+        <Stat
+          label="Database Size"
+          value={data ? fmtBytes(data.fileBytes) : '—'}
+          sub={storage?.mode === 'drive' ? 'In Google Drive' : 'Local JSON file'}
+          icon={HardDrive}
+        />
+        <Stat
+          label="Visitor Records"
+          value={fmtNumber(data?.totals.visitors)}
+          sub="Individual profiles"
+          icon={Database}
+        />
+        <Stat
+          label="Last Synchronized"
+          value={data ? fmtTime(data.updatedAt) : '—'}
+          sub="Server timestamp"
+          icon={CheckCircle2}
+        />
+        <Stat
+          label="Retention Policy"
+          value="30d / 90d"
+          sub="30d daily, 90d prune"
+          icon={ShieldCheck}
+        />
       </div>
 
       {msg && (
-        <p
-          className={`rounded-xl border px-4 py-2.5 text-xs ${
+        <div
+          className={`flex items-center gap-2 rounded-xl border p-4 text-xs font-semibold shadow-sm ${
             state === 'error'
-              ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
-              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+              ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800/40 dark:bg-rose-950/40 dark:text-rose-400'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-400'
           }`}
         >
-          {msg}
-        </p>
+          {state === 'error' ? <AlertTriangle className="h-4 w-4 shrink-0" /> : <CheckCircle2 className="h-4 w-4 shrink-0" />}
+          <span>{msg}</span>
+        </div>
       )}
 
+      {/* Export & Drive Actions Card */}
       <Card>
-        <CardTitle>Storage & export</CardTitle>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <CardTitle
+          icon={CloudUpload}
+          subtitle="Sync database to cloud or download offline report"
+        >
+          Backup & Data Export
+        </CardTitle>
+
+        <div className="mt-4 flex flex-wrap gap-2.5">
           <button
             type="button"
             onClick={backupToDrive}
             disabled={state === 'working'}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-95 disabled:opacity-50"
           >
             <CloudUpload className="h-4 w-4" />
-            {state === 'working' ? 'Saving...' : 'Backup to my Drive'}
+            {state === 'working' ? 'Uploading to Drive...' : 'Backup to Google Drive'}
           </button>
+
           <button
             type="button"
             onClick={exportCsv}
             disabled={!data}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-ink-card px-4 py-2.5 text-xs font-semibold text-neutral-200 hover:text-white disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:opacity-50 dark:border-[#1F2430] dark:bg-[#141824] dark:text-[#E2E4ED] dark:hover:bg-[#1A202E]"
           >
-            <Download className="h-4 w-4" /> Export visitors CSV
+            <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Export Visitors CSV</span>
           </button>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-neutral-500">
-          Backup writes a minified copy to <span className="font-mono">PlacementWire_Data/admin_analytics.json</span> in
-          your Drive. Space stays small because: one row per visitor, short device labels
-          instead of full user-agents, query strings stripped from paths, 20-pages-per-visitor cap, 30-day rolling
-          daily counters, and 90-day auto-prune of single-visit anonymous rows.
+
+        <p className="mt-4 text-xs leading-relaxed text-slate-500 dark:text-[#94A3B8]">
+          Backups are saved to <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">PlacementWire_Data/admin_analytics.json</span> inside your connected Google Drive account. Storage usage remains ultra-compact because metrics are grouped by visitor rather than storing raw clickstreams.
         </p>
       </Card>
 
-      {/* Drive logging setup — required on read-only hosts (Vercel/serverless) */}
+      {/* Serverless Setup Card */}
       <Card>
-        <CardTitle>Drive logging (for serverless hosting)</CardTitle>
-        <p className="mt-2 text-[11px] leading-relaxed text-neutral-400">
-          Hosts like Vercel have a <span className="font-semibold text-neutral-200">read-only filesystem</span> — the
-          server cannot keep a log file, so every visit is written straight into your Google Drive instead. For that
-          the server needs your Google <span className="font-mono">refresh token</span> as the{' '}
-          <span className="font-mono">ADMIN_DRIVE_REFRESH_TOKEN</span> env variable. On localhost/VPS with a writable
-          disk you can skip this entirely.
-        </p>
-        <ol className="mt-2 list-decimal space-y-1 pl-5 text-[11px] leading-relaxed text-neutral-400">
-          <li>Log in here with your <span className="font-semibold text-neutral-200">admin Google account</span> (full consent screen, not mock).</li>
-          <li>Click the button below to reveal this session&apos;s refresh token.</li>
-          <li>Paste it into <span className="font-mono">ADMIN_DRIVE_REFRESH_TOKEN</span> in Vercel → Project → Settings → Environment Variables, then <span className="font-semibold text-neutral-200">Redeploy</span>.</li>
-        </ol>
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={fetchToken}
-            disabled={tokenState === 'working'}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-neutral-200 hover:text-white disabled:opacity-50"
-          >
-            <KeyRound className="h-4 w-4" />
-            {tokenState === 'working' ? 'Reading session...' : 'Get my Drive token'}
-          </button>
-        </div>
-        {tokenState === 'done' && tokenInfo && (
-          <div className="mt-3 rounded-xl border border-white/10 bg-ink p-3 text-[11px]">
-            <p className="text-neutral-400">
-              Server token configured:{' '}
-              <span className={tokenInfo.tokenConfigured ? 'font-bold text-emerald-300' : 'font-bold text-amber-300'}>
-                {tokenInfo.tokenConfigured ? 'YES' : 'NO'}
-              </span>
-            </p>
-            {tokenInfo.refreshToken ? (
-              <p className="mt-2 break-all font-mono text-emerald-300">{tokenInfo.refreshToken}</p>
-            ) : (
-              <p className="mt-2 text-neutral-400">{tokenInfo.hint}</p>
-            )}
+        <CardTitle
+          icon={KeyRound}
+          subtitle="For deployment on serverless read-only platforms (Vercel, Cloud Run)"
+        >
+          Serverless Drive Authorization
+        </CardTitle>
+
+        <div className="mt-3 space-y-3 text-xs text-slate-500 dark:text-[#94A3B8]">
+          <p className="leading-relaxed">
+            On read-only hosting environments like Vercel, the server cannot write to local disk. In this scenario, analytics events are written directly to your Google Drive using a refresh token.
+          </p>
+
+          <ol className="list-decimal space-y-1.5 pl-5">
+            <li>Ensure you are signed in with the primary administrator Google account.</li>
+            <li>Click &quot;Reveal Session Refresh Token&quot; below.</li>
+            <li>Copy the token into your hosting provider&apos;s environment variables as <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-slate-800 dark:bg-[#1F2430] dark:text-slate-200">ADMIN_DRIVE_REFRESH_TOKEN</code> and redeploy.</li>
+          </ol>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={fetchToken}
+              disabled={tokenState === 'working'}
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 disabled:opacity-50 dark:border-[#1F2430] dark:bg-[#141824] dark:text-[#E2E4ED] dark:hover:bg-[#1A202E]"
+            >
+              <KeyRound className="h-4 w-4" />
+              {tokenState === 'working' ? 'Reading session credentials...' : 'Reveal Session Refresh Token'}
+            </button>
           </div>
-        )}
-        {tokenState === 'error' && (
-          <p className="mt-2 text-[11px] text-rose-300">Could not read the session token.</p>
-        )}
+
+          {tokenState === 'done' && tokenInfo && (
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-4 dark:border-[#1F2430] dark:bg-[#0B0E14]">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  Environment Configuration Status:
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    tokenInfo.tokenConfigured
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                      : 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                  }`}
+                >
+                  {tokenInfo.tokenConfigured ? 'CONFIGURED' : 'NOT CONFIGURED'}
+                </span>
+              </div>
+
+              {tokenInfo.refreshToken ? (
+                <div className="mt-3">
+                  <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                    Refresh Token:
+                  </p>
+                  <pre className="mt-1 max-w-full overflow-x-auto rounded-lg bg-white p-2.5 font-mono text-[11px] text-emerald-600 dark:bg-[#141824] dark:text-emerald-400 border border-slate-200 dark:border-[#1F2430]">
+                    {tokenInfo.refreshToken}
+                  </pre>
+                </div>
+              ) : (
+                <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  {tokenInfo.hint}
+                </p>
+              )}
+            </div>
+          )}
+
+          {tokenState === 'error' && (
+            <p className="text-xs text-rose-600 dark:text-rose-400">
+              Unable to read session credentials from the server.
+            </p>
+          )}
+        </div>
       </Card>
     </div>
   );

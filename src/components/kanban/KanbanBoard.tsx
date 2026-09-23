@@ -34,31 +34,31 @@ const COLUMNS: ColumnDef[] = [
   {
     id: 'NEW',
     title: 'New Drives',
-    badgeColor: 'bg-white/[0.03] text-slate-300 border-white/10',
+    badgeColor: 'bg-white text-muted border-line',
     accentBorder: '',
   },
   {
     id: 'APPLIED',
     title: 'Applied',
-    badgeColor: 'bg-white/[0.03] text-slate-300 border-white/10',
+    badgeColor: 'bg-white text-muted border-line',
     accentBorder: '',
   },
   {
     id: 'SHORTLISTED',
     title: 'Shortlisted',
-    badgeColor: 'bg-white/[0.03] text-slate-300 border-white/10',
+    badgeColor: 'bg-white text-muted border-line',
     accentBorder: '',
   },
   {
     id: 'INTERVIEW_SCHEDULED',
     title: 'Interviews',
-    badgeColor: 'bg-white/[0.03] text-slate-300 border-white/10',
+    badgeColor: 'bg-white text-muted border-line',
     accentBorder: '',
   },
   {
     id: 'ARCHIVED',
     title: 'Archived',
-    badgeColor: 'bg-white/[0.03] text-slate-300 border-white/10',
+    badgeColor: 'bg-white text-muted border-line',
     accentBorder: '',
   },
 ];
@@ -100,14 +100,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             key={col.id}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, col.id)}
-            className="flex flex-col rounded-lg border border-white/10 bg-white/[0.03] p-3 min-h-[500px]"
+            className="flex flex-col rounded-lg border border-line bg-canvas p-3 min-h-[500px]"
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between pb-3 px-1 border-b border-white/10 mb-3">
+            <div className="flex items-center justify-between pb-3 px-1 border-b border-line mb-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">{col.title}</h3>
+                <h3 className="text-xs font-semibold text-[#323243] uppercase tracking-wider">{col.title}</h3>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${col.badgeColor}`}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${col.badgeColor}`}
                 >
                   {columnDrives.length}
                 </span>
@@ -117,8 +117,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             {/* Column Cards */}
             <div className="flex flex-col gap-2.5 flex-1">
               {columnDrives.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center p-6 text-center border border-dashed border-white/10 rounded-lg">
-                  <span className="text-xs text-slate-400">No drives in {col.title}</span>
+                <div className="flex flex-1 items-center justify-center p-6 text-center border border-dashed border-line rounded-lg bg-white">
+                  <span className="text-xs text-muted">No drives in {col.title}</span>
                 </div>
               ) : (
                 columnDrives.map((drive) => {
@@ -131,19 +131,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       draggable
                       onDragStart={(e) => handleDragStart(e, drive.id)}
                       onClick={() => onSelectDrive(drive)}
-                      className={`group relative rounded-lg border border-white/10 bg-white/[0.03] p-3.5 cursor-pointer hover:bg-white/[0.05] transition-colors duration-150 ${col.accentBorder}`}
+                      className={`group relative rounded-lg border border-line bg-white p-3.5 cursor-pointer shadow-card hover:border-primary transition-colors duration-150 ${col.accentBorder}`}
                     >
                       {/* Card Top: Company & Star */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-lg bg-white/5 text-slate-300 font-bold text-xs flex items-center justify-center border border-white/10">
+                          <div className="h-7 w-7 rounded-md bg-primary-soft text-primary font-semibold text-xs flex items-center justify-center border border-line">
                             {drive.company.charAt(0)}
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors duration-150 line-clamp-1">
+                            <h4 className="text-xs font-semibold text-[#323243] group-hover:text-primary transition-colors duration-150 line-clamp-1">
                               {drive.company}
                             </h4>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-muted">
                               {drive.positions.length > 1
                                 ? `${drive.positions.length} Profiles`
                                 : firstPosition?.role}
@@ -156,27 +156,27 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             e.stopPropagation();
                             onToggleStar(drive.id);
                           }}
-                          className={`p-1 rounded-md transition-colors ${
+                          className={`p-1 rounded-md border transition-colors ${
                             drive.starred
-                              ? 'text-yellow-400'
-                              : 'text-slate-400 hover:text-yellow-400'
+                              ? 'border-accent bg-accent-soft text-accent'
+                              : 'border-transparent text-muted hover:border-accent hover:text-accent'
                           }`}
                         >
-                          <Star className={`h-3.5 w-3.5 ${drive.starred ? 'fill-yellow-400' : ''}`} />
+                          <Star className={`h-3.5 w-3.5 ${drive.starred ? 'fill-current' : ''}`} />
                         </button>
                       </div>
 
                       {/* Package / Location Tags */}
                       <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px]">
                         {firstPosition?.ctc && (
-                          <span className="inline-flex items-center gap-0.5 rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 font-semibold text-emerald-400">
+                          <span className="inline-flex items-center gap-0.5 rounded-full border border-success/20 bg-success-soft px-1.5 py-0.5 font-semibold text-[#15803D]">
                             <IndianRupee className="h-2.5 w-2.5" />
                             {firstPosition.ctc}
                           </span>
                         )}
 
                         {firstPosition?.location && (
-                          <span className="inline-flex items-center gap-0.5 text-slate-400">
+                          <span className="inline-flex items-center gap-0.5 text-muted">
                             <MapPin className="h-2.5 w-2.5" />
                             {firstPosition.location}
                           </span>
@@ -184,14 +184,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </div>
 
                       {/* Deadline Countdown & Actions */}
-                      <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/10 text-[10px]">
+                      <div className="mt-3 flex items-center justify-between pt-2 border-t border-line text-[10px]">
                         <span
-                          className={`inline-flex items-center gap-1 font-medium ${
+                          className={`inline-flex items-center gap-1 font-normal ${
                             deadlineInfo.statusColor === 'rose'
-                              ? 'text-rose-400'
+                              ? 'text-error'
                               : deadlineInfo.statusColor === 'amber'
-                              ? 'text-amber-400'
-                              : 'text-slate-400'
+                              ? 'text-[#9A6B0F]'
+                              : 'text-muted'
                           }`}
                         >
                           <Clock className="h-3 w-3" />
@@ -201,7 +201,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         <div className="flex items-center gap-1">
                           {drive.user_notes && (
                             <span title="Contains private notes">
-                              <FileText className="h-3 w-3 text-indigo-400" />
+                              <FileText className="h-3 w-3 text-primary" />
                             </span>
                           )}
 
@@ -211,7 +211,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 e.stopPropagation();
                                 onApply(drive.id);
                               }}
-                              className="inline-flex items-center gap-1 rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-emerald-500 transition-colors duration-150"
+                              className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-0.5 text-[11px] font-medium text-white shadow-sm hover:bg-primary-hover transition-colors duration-150"
                               title="Apply & track status"
                             >
                               <Send className="h-2.5 w-2.5" />
@@ -222,7 +222,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </div>
 
                       {/* One-click status selector */}
-                      <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400">
+                      <div className="mt-2 pt-1.5 border-t border-line flex items-center justify-between text-[10px] text-muted">
                         <span>Status:</span>
                         <StatusDropdown
                           status={drive.status}

@@ -64,48 +64,48 @@ export const StatCards: React.FC<StatCardsProps> = React.memo(({ drives }) => {
         label: 'Total Drives',
         value: drives.length,
         sub: monthText,
-        badge: 'bg-violet-500/15 text-violet-300',
+        badge: 'bg-primary-soft text-primary dark:bg-primary/20 dark:text-[#A5B4FC]',
       },
       {
         key: 'active',
         label: 'Active Applications',
         value: active,
         sub: `${applied} applied · ${interviews} interviews`,
-        badge: 'bg-sky-500/15 text-sky-300',
+        badge: 'bg-primary-soft text-primary dark:bg-primary/20 dark:text-[#A5B4FC]',
       },
       {
         key: 'expiring',
         label: 'Expiring Soon',
         value: expiring,
         sub: expiring > 0 ? 'Action needed' : 'All clear',
-        badge: 'bg-orange-500/15 text-orange-300',
+        badge: 'bg-accent-soft text-[#9A6B0F] dark:bg-accent/20 dark:text-[#FCD34D]',
       },
       {
         key: 'starred',
         label: 'Starred',
         value: starred,
         sub: 'Saved for later',
-        badge: 'bg-yellow-500/15 text-yellow-300',
+        badge: 'bg-accent-soft text-[#9A6B0F] dark:bg-accent/20 dark:text-[#FCD34D]',
       },
     ];
   }, [drives]);
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {stats.map((s) => (
         <div
           key={s.key}
-          className="min-w-0 rounded-2xl border border-white/5 bg-ink-card p-3.5 min-[400px]:p-4 sm:p-5"
+          className="card-base min-w-0 p-3.5 sm:p-4"
         >
           <span
-            className={`inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[9px] min-[400px]:text-[10px] font-bold uppercase tracking-wider ${s.badge}`}
+            className={`overline-tag inline-block max-w-full truncate rounded-full px-2.5 py-1 text-[11px] ${s.badge}`}
           >
             {s.label}
           </span>
-          <div className="mt-2 text-2xl min-[400px]:text-3xl font-extrabold tracking-tight text-white tabular-nums">
+          <div className="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight text-[#323243] tabular-nums dark:text-[#E2E4ED]">
             {s.value}
           </div>
-          <p className="mt-1 truncate text-[11px] sm:text-xs text-neutral-500" title={s.sub}>{s.sub}</p>
+          <p className="mt-0.5 truncate text-xs font-normal text-muted dark:text-[#94A3B8]" title={s.sub}>{s.sub}</p>
         </div>
       ))}
     </div>

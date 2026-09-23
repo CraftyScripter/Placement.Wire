@@ -71,15 +71,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
-  // Keep local input in sync when query is cleared elsewhere
   useEffect(() => {
     if (filters.query === '' && searchInput !== '') setSearchInput('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.query]);
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      {/* Pills + search + controls */}
+    <div className="space-y-5">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="no-scrollbar -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
           {PILLS.map((pill) => {
@@ -89,10 +87,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 key={pill.key}
                 type="button"
                 onClick={() => onPillChange(pill.key)}
-                className={`shrink-0 whitespace-nowrap rounded-full px-3.5 sm:px-4 py-2 text-xs font-semibold transition-colors duration-150 ${
+                className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all duration-150 ${
                   isActive
-                    ? 'bg-brandviolet text-white'
-                    : 'bg-ink-input text-neutral-400 hover:bg-white/10 hover:text-white'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-white text-muted border border-line hover:text-[#323243] hover:border-primary/50 dark:border-[#1F2430] dark:bg-[#141824] dark:text-[#94A3B8] dark:hover:text-[#E2E4ED] dark:hover:border-primary/50'
                 }`}
               >
                 {pill.label}
@@ -101,21 +99,21 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-0 flex-1 basis-full min-[480px]:basis-auto min-[480px]:w-56 xl:w-72 xl:flex-none">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search roles, companies, skills..."
-              className="w-full rounded-full border border-transparent bg-ink-input py-2.5 pl-10 pr-9 text-xs text-neutral-100 placeholder-neutral-500 transition-colors duration-150 focus:border-brandviolet focus:outline-none"
+              className="input-base w-full rounded-md pl-10 pr-9 text-sm font-normal shadow-card"
             />
             {searchInput && (
               <button
                 type="button"
                 onClick={() => setSearchInput('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-neutral-500 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-muted hover:text-[#323243] dark:hover:text-[#E2E4ED]"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -123,28 +121,30 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
 
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 min-[480px]:flex-none">
-          <ThemeDropdown
-            value={filters.batch}
-            options={BATCH_OPTIONS}
-            onChange={(val) => onFilterChange({ ...filters, batch: val })}
-            className="min-w-0 flex-1 min-[480px]:flex-none"
-          />
-          <ThemeDropdown
-            value={filters.sortBy}
-            options={SORT_OPTIONS}
-            onChange={(val) => onFilterChange({ ...filters, sortBy: val as SortOption })}
-            prefixIcon={ArrowUpDown}
-            className="min-w-0 flex-1 min-[480px]:flex-none"
-          />
+            <ThemeDropdown
+              value={filters.batch}
+              options={BATCH_OPTIONS}
+              onChange={(val) => onFilterChange({ ...filters, batch: val })}
+              className="min-w-0 flex-1 min-[480px]:w-36 min-[480px]:flex-none"
+            />
+            <ThemeDropdown
+              value={filters.sortBy}
+              options={SORT_OPTIONS}
+              onChange={(val) => onFilterChange({ ...filters, sortBy: val as SortOption })}
+              prefixIcon={ArrowUpDown}
+              className="min-w-0 flex-1 min-[480px]:w-44 min-[480px]:flex-none"
+            />
 
-          <div className="flex shrink-0 items-center rounded-full border border-white/10 bg-ink-input p-1">
+          <div className="flex h-10 shrink-0 items-center rounded-md border border-line bg-white p-1 shadow-card dark:border-[#1F2430] dark:bg-[#141824]">
             <button
               type="button"
               onClick={() => onViewModeChange('list')}
               title="List view"
               aria-label="List view"
-              className={`rounded-full p-2 transition-colors duration-150 ${
-                viewMode === 'list' ? 'bg-brandviolet text-white' : 'text-neutral-500 hover:text-white'
+              className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-150 ${
+                viewMode === 'list'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-muted hover:text-[#323243] dark:text-[#94A3B8] dark:hover:text-[#E2E4ED]'
               }`}
             >
               <List className="h-4 w-4" />
@@ -154,8 +154,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onClick={() => onViewModeChange('cards')}
               title="Cards view"
               aria-label="Cards view"
-              className={`rounded-full p-2 transition-colors duration-150 ${
-                viewMode === 'cards' ? 'bg-brandviolet text-white' : 'text-neutral-500 hover:text-white'
+              className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-150 ${
+                viewMode === 'cards'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-muted hover:text-[#323243] dark:text-[#94A3B8] dark:hover:text-[#E2E4ED]'
               }`}
             >
               <LayoutGrid className="h-4 w-4" />
@@ -165,10 +167,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
       </div>
 
-      {/* Heading + count */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="min-w-0 truncate text-base sm:text-lg font-bold text-white">{heading}</h2>
-        <span className="shrink-0 text-[11px] sm:text-xs text-neutral-500">
+        <h2 className="min-w-0 truncate text-2xl font-semibold text-[#323243] dark:text-[#E2E4ED]">{heading}</h2>
+        <span className="shrink-0 text-sm font-normal text-muted dark:text-[#94A3B8]">
           {resultCount} {resultCount === 1 ? 'opportunity' : 'opportunities'} found
         </span>
       </div>

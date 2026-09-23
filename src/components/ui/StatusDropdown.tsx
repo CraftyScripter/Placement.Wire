@@ -12,13 +12,13 @@ interface StatusConfig {
 }
 
 const STATUS_CONFIGS: Record<ApplicationStatus, StatusConfig> = {
-  NEW: { label: 'New', dotColor: 'bg-indigo-400' },
-  APPLIED: { label: 'Applied', dotColor: 'bg-sky-400' },
-  SHORTLISTED: { label: 'Shortlisted', dotColor: 'bg-amber-400' },
-  INTERVIEW_SCHEDULED: { label: 'Interview', dotColor: 'bg-purple-400' },
-  SELECTED: { label: 'Selected', dotColor: 'bg-emerald-400' },
-  REJECTED: { label: 'Rejected', dotColor: 'bg-rose-400' },
-  ARCHIVED: { label: 'Archived', dotColor: 'bg-slate-400' },
+  NEW: { label: 'New', dotColor: 'bg-primary' },
+  APPLIED: { label: 'Applied', dotColor: 'bg-[#2FA8DE]' },
+  SHORTLISTED: { label: 'Shortlisted', dotColor: 'bg-accent' },
+  INTERVIEW_SCHEDULED: { label: 'Interview', dotColor: 'bg-[#9B7BF5]' },
+  SELECTED: { label: 'Selected', dotColor: 'bg-success' },
+  REJECTED: { label: 'Rejected', dotColor: 'bg-error' },
+  ARCHIVED: { label: 'Archived', dotColor: 'bg-muted' },
 };
 
 const ALL_STATUSES: ApplicationStatus[] = [
@@ -88,8 +88,8 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
           e.stopPropagation();
           setIsOpen((prev) => !prev);
         }}
-        className={`inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-ink-input font-medium text-neutral-200 transition-colors duration-150 hover:bg-white/10 hover:text-white ${
-          size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-xs sm:text-sm'
+        className={`inline-flex items-center gap-1.5 rounded-md border border-line bg-white font-normal text-[#323243] shadow-sm transition-colors duration-150 hover:border-primary hover:text-primary dark:border-[#1F2430] dark:bg-[#141824] dark:text-[#E2E4ED] ${
+          size === 'sm' ? 'h-8 px-2.5 text-xs' : 'h-10 px-3 text-sm'
         }`}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -97,7 +97,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
         <span className={`h-1.5 w-1.5 rounded-full ${current.dotColor}`} />
         <span>{current.label}</span>
         <ChevronDown
-          className={`h-3 w-3 text-slate-400 transition-transform duration-150 ${
+          className={`h-3 w-3 text-muted transition-transform duration-150 dark:text-[#94A3B8] ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -114,7 +114,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                 ? { top: pos.top, left: pos.left }
                 : { top: -9999, left: -9999, visibility: 'hidden' }
             }
-            className="fixed z-[100] min-w-[150px] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-ink-card p-1.5 shadow-menu animate-menu-fade focus:outline-none"
+            className="fixed z-[100] min-w-[150px] max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-white p-1.5 shadow-pop animate-menu-fade focus:outline-none dark:border-[#1F2430] dark:bg-[#141824]"
           >
             {ALL_STATUSES.map((st) => {
               const isSelected = st === status;
@@ -131,17 +131,17 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     onChange(st);
                     setIsOpen(false);
                   }}
-                  className={`flex items-center justify-between w-full rounded-md px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
+                  className={`flex items-center justify-between w-full rounded-md px-2.5 py-2 text-left text-sm transition-colors duration-150 ${
                     isSelected
-                      ? 'bg-white/[0.07] text-white font-semibold'
-                      : 'text-slate-300 hover:bg-white/[0.05] hover:text-white'
+                      ? 'bg-primary-soft text-primary font-normal dark:bg-primary/20'
+                      : 'text-[#323243] hover:bg-canvas dark:text-[#CBD5E1] dark:hover:bg-[#0B0E14]'
                   }`}
                 >
                   <span className="flex items-center gap-2">
                     <span className={`h-2 w-2 rounded-full ${cfg.dotColor}`} />
                     <span>{cfg.label}</span>
                   </span>
-                  {isSelected && <Check className="h-3.5 w-3.5 text-violet-300" />}
+                  {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
                 </button>
               );
             })}

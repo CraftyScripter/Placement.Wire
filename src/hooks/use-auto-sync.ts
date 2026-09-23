@@ -1,23 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
-const INTERVAL_MS = 15 * 60 * 1000;
-const FOCUS_MIN_GAP_MS = 2 * 60 * 1000;
-const INITIAL_DELAY_MS = 30 * 1000;
+const SESSION_SYNC_KEY = 'pw_panel_synced';
 
-function inActiveWindow(): boolean {
-  const hour = Number(
-    new Intl.DateTimeFormat('en-IN', {
-      hour: 'numeric',
-      hourCycle: 'h23',
-      timeZone: 'Asia/Kolkata',
-    }).format(new Date())
-  );
-  return hour >= 8 && hour < 22;
-}
-
-interface AutoSyncOpts {
+interface ArrivalSyncOpts {
   enabled: boolean;
   canRun: boolean;
   syncMails: () => Promise<{
@@ -29,55 +16,53 @@ interface AutoSyncOpts {
 }
 
 /**
- * Background Gmail polling based on observed mail timings (~1/day, bursty,
- * 9am–6pm IST): every 15 min, only when the tab is visible and inside the
- * 8am–10pm IST window, plus a refetch on window focus. Notifies only when
- * new drives actually arrived. Backs off after consecutive failures.
+ * Arrival sync: runs ONCE when the user opens the panel/dashboard in a session.
+ * Removed the 15-minute background interval and window focus refetching to strictly
+ * prevent Google API quota exhaustion.
+ * After this initial arrival sync, further fetches only happen when the user manually clicks "Sync Mails".
  */
-export function useAutoSync({ enabled, canRun, syncMails, onNewArrivals }: AutoSyncOpts) {
-  const live = useRef({ canRun, syncMails, onNewArrivals });
-  live.current = { canRun, syncMails, onNewArrivals };
-  const lastRun = useRef(0);
-  const failures = useRef(0);
-
-  const run = useCallback(async () => {
-    const { canRun: ok, syncMails: sync, onNewArrivals: notify } = live.current;
-    if (!ok) return;
-    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
-    if (!inActiveWindow()) return;
-
-    const res = await sync();
-    if (res?.success) {
-      failures.current = 0;
-      lastRun.current = Date.now();
-      if (res.addedCount > 0) notify(res.addedCount);
-    } else {
-      failures.current += 1;
-    }
-  }, []);
+export function useAutoSync({ enabled, canRun, syncMails, onNewArrivals }: ArrivalSyncOpts) {
+  const hasRunRef = useRef(false);
+  const liveRef = useRef({ canRun, syncMails, onNewArrivals });
+  liveRef.current = { canRun, syncMails, onNewArrivals };
 
   useEffect(() => {
     if (!enabled) return;
 
-    const tick = () => {
-      // Back off: after failures, require proportionally longer gaps.
-      if (failures.current > 0 && Date.now() - lastRun.current < INTERVAL_MS * failures.current) {
+    // Check if we already synced during this visit/session
+    try {
+      if (typeof window !== 'undefined' && sessionStorage.getItem(SESSION_SYNC_KEY) === 'true') {
         return;
       }
-      run();
+    } catch {
+      // sessionStorage unavailable, fall back to in-memory ref
+    }
+
+    if (hasRunRef.current) return;
+
+    const executeArrivalSync = async () => {
+      const { canRun: ok, syncMails: sync, onNewArrivals: notify } = liveRef.current;
+      if (!ok) return;
+
+      hasRunRef.current = true;
+      try {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(SESSION_SYNC_KEY, 'true');
+        }
+      } catch {
+        /* ignore */
+      }
+
+      try {
+        const res = await sync();
+        if (res?.success && res.addedCount > 0) {
+          notify(res.addedCount);
+        }
+      } catch (err) {
+        console.warn('Arrival sync error:', err);
+      }
     };
 
-    const id = setInterval(tick, INTERVAL_MS);
-    const initial = setTimeout(run, INITIAL_DELAY_MS);
-    const onFocus = () => {
-      if (Date.now() - lastRun.current > FOCUS_MIN_GAP_MS) run();
-    };
-    window.addEventListener('focus', onFocus);
-
-    return () => {
-      clearInterval(id);
-      clearTimeout(initial);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [enabled, run]);
+    executeArrivalSync();
+  }, [enabled]);
 }

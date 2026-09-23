@@ -19,6 +19,8 @@ import {
   X,
 } from 'lucide-react';
 
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+
 export type NavKey =
   | 'dashboard'
   | 'applications'
@@ -63,7 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const settingsActive = pathname === '/settings';
   const adminActive = pathname === '/admin' || pathname?.startsWith('/admin/');
 
-  // Lock background scroll while the mobile drawer is open.
   useEffect(() => {
     if (!mobileOpen) return;
     const prev = document.body.style.overflow;
@@ -73,7 +74,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
   }, [mobileOpen]);
 
-  // Close the drawer on Escape.
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -84,26 +84,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [mobileOpen, onCloseMobile]);
 
   const navBtn =
-    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150';
+    'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors duration-150';
 
   const content = (
-    <div className="flex h-full flex-col rounded-2xl bg-ink-sidebar p-4">
-      {/* Brand */}
+    <div className="flex h-full flex-col rounded-lg border border-line bg-white p-4 shadow-card dark:border-white/10 dark:bg-[#141824]">
       <Link href="/" className="flex items-center gap-2.5 px-2 py-2">
+        <Image
+          src="/icon_light.png"
+          alt="PlacementWire"
+          width={30}
+          height={38}
+          className="h-8 w-auto object-contain dark:hidden"
+        />
         <Image
           src="/icon_dark.png"
           alt="PlacementWire"
           width={30}
           height={38}
-          className="h-8 w-auto object-contain"
+          className="hidden h-8 w-auto object-contain dark:block"
         />
-        <span className="text-base font-extrabold tracking-tight text-white">
-          Placement<span className="text-brandviolet-hover">Wire</span>
+        <span className="text-base font-semibold tracking-tight text-[#323243] dark:text-[#E2E4ED]">
+          Placement<span className="text-primary">Wire</span>
         </span>
       </Link>
 
-      {/* Menu */}
-      <p className="mt-6 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-500">
+      <p className="overline-tag mt-6 px-3 text-muted">
         Menu
       </p>
       <nav className="mt-2 flex-1 space-y-1 overflow-y-auto">
@@ -121,16 +126,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               className={`${navBtn} ${
                 isActive
-                  ? 'bg-brandviolet text-white'
-                  : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+                  ? 'bg-primary-soft text-primary dark:bg-primary/20 dark:text-primary'
+                  : 'text-[#323243] hover:bg-canvas hover:text-primary dark:text-[#CBD5E1] dark:hover:bg-[#0B0E14] dark:hover:text-[#E2E4ED]'
               }`}
             >
               <Icon className="h-[18px] w-[18px] shrink-0" />
               <span className="flex-1 text-left">{item.label}</span>
               {typeof count === 'number' && count > 0 && (
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-white/5 text-neutral-400'
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    isActive
+                      ? 'bg-primary text-white'
+                      : 'bg-canvas text-muted dark:border dark:border-[#1F2430] dark:bg-[#0B0E14] dark:text-[#94A3B8]'
                   }`}
                 >
                   {count}
@@ -140,29 +147,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
 
-        {/* Settings — in the menu flow, right below Archived */}
         <Link
           href="/settings"
           onClick={onCloseMobile}
           className={`${navBtn} ${
             settingsActive
-              ? 'bg-brandviolet text-white'
-              : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+              ? 'bg-primary-soft text-primary dark:bg-primary/20 dark:text-primary'
+              : 'text-[#323243] hover:bg-canvas hover:text-primary dark:text-[#CBD5E1] dark:hover:bg-[#0B0E14] dark:hover:text-[#E2E4ED]'
           }`}
         >
           <Settings className="h-[18px] w-[18px] shrink-0" />
           <span className="flex-1 text-left">Settings</span>
         </Link>
 
-        {/* Admin Panel — only rendered for the admin account */}
         {isAdmin && (
           <Link
             href="/admin"
             onClick={onCloseMobile}
             className={`${navBtn} ${
               adminActive
-                ? 'bg-amber-500 text-black'
-                : 'border border-amber-500/30 text-amber-300 hover:bg-amber-500/10 hover:text-amber-200'
+                ? 'bg-accent text-[#1f1f2e] font-semibold'
+                : 'border border-accent/50 text-[#323243] hover:bg-accent-soft hover:text-[#323243] dark:border-accent/40 dark:text-[#FCD34D] dark:hover:bg-accent/10 dark:hover:text-[#FCD34D]'
             }`}
           >
             <ShieldCheck className="h-[18px] w-[18px] shrink-0" />
@@ -171,12 +176,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </nav>
 
-      {/* Logout */}
-      <div className="border-t border-white/10 pt-3">
+      <div className="border-t border-line dark:border-[#1F2430] pt-3 space-y-2">
+        <div className="flex items-center justify-between px-3 py-1.5 text-xs text-muted dark:text-[#94A3B8]">
+          <span className="font-medium">Theme</span>
+          <ThemeToggle />
+        </div>
         <button
           type="button"
           onClick={onLogout}
-          className={`${navBtn} text-neutral-400 hover:bg-rose-500/10 hover:text-rose-300`}
+          className={`${navBtn} text-muted hover:bg-error-soft hover:text-error dark:text-[#94A3B8] dark:hover:bg-error/20 dark:hover:text-[#F87171]`}
         >
           <LogOut className="h-[18px] w-[18px] shrink-0" />
           <span className="flex-1 text-left">Logout</span>
@@ -187,16 +195,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Desktop */}
       <aside className="hidden w-[260px] shrink-0 lg:block xl:w-[280px] 3xl:w-[300px]">
         <div className="sticky top-4 h-[calc(100vh-2rem)] 2xl:top-6 2xl:h-[calc(100vh-3rem)]">{content}</div>
       </aside>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 animate-overlay-fade bg-black/60"
+            className="absolute inset-0 animate-overlay-fade bg-[#323243]/40"
             onClick={onCloseMobile}
           />
           <div className="absolute left-0 top-0 h-full w-[280px] max-w-[85vw] animate-drawer-in p-2">
@@ -205,7 +211,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 type="button"
                 onClick={onCloseMobile}
-                className="absolute right-3 top-3 rounded-lg p-1.5 text-neutral-400 hover:bg-white/5 hover:text-white"
+                className="absolute right-3 top-3 rounded-md p-1.5 text-muted hover:bg-canvas hover:text-[#323243]"
                 title="Close menu"
                 aria-label="Close menu"
               >

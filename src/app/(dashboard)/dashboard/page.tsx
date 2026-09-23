@@ -5,6 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Bell, Menu, RefreshCw, Check, AlertCircle, CheckCircle2, Cloud, X } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Sidebar, NavKey } from '@/components/layout/Sidebar';
 import { NotificationPanel } from '@/components/dashboard/NotificationPanel';
 import { StatCards } from '@/components/dashboard/StatCards';
@@ -29,9 +30,9 @@ const PlacementDetailModal = dynamic(
 
 function CardsFallback() {
   return (
-    <div className="grid grid-cols-1 min-[560px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-3 sm:gap-4 3xl:gap-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3 2xl:grid-cols-4">
       {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="h-56 animate-pulse rounded-2xl border border-white/5 bg-ink-card" />
+        <div key={i} className="h-56 animate-pulse rounded-lg border border-line bg-white" />
       ))}
     </div>
   );
@@ -264,7 +265,17 @@ export default function DashboardPage() {
   const handleManualSync = async () => {
     const res = await syncMails();
     if (res?.success) {
-      showToast(res.warning || `Scan complete! ${res.addedCount} new, ${res.updatedCount} updated.`);
+      if (res.warning) {
+        showToast(res.warning);
+      } else if (res.addedCount === 0 && res.updatedCount === 0) {
+        showToast('All placement emails are up to date! No new drives found.');
+      } else if (res.hasMore && res.remainingCount > 0) {
+        showToast(
+          `Synced: ${res.addedCount} new, ${res.updatedCount} updated (${res.remainingCount} older emails remaining in mailbox).`
+        );
+      } else {
+        showToast(`All caught up! Synced ${res.addedCount} new drives (${res.updatedCount} updated).`);
+      }
     } else {
       showToast(res?.error || 'Could not scan mailbox. Check Google authorization.');
     }
@@ -370,7 +381,7 @@ export default function DashboardPage() {
 
   const newIds = useMemo(() => new Set(newArrivalDrives.map((d) => d.id)), [newArrivalDrives]);
 
-  // Background Gmail polling (15 min, daytime IST, visible tab only).
+  // Arrival sync: runs ONCE when panel is opened per session to preserve API quota. Subsequent syncs are manual only.
   useAutoSync({
     enabled: !isLoading,
     canRun: !isLoading && !isSyncingMails,
@@ -523,15 +534,15 @@ export default function DashboardPage() {
 
   if (authLoading || !isAuthenticated) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-ink text-neutral-500">
-        <div className="mb-3 h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-brandviolet" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas text-muted dark:bg-[#0B0E14] dark:text-[#94A3B8]">
+        <div className="mb-3 h-10 w-10 animate-spin rounded-full border-2 border-line border-t-primary" />
         <span className="text-xs font-medium">Checking student session...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-ink text-neutral-200">
+    <div className="min-h-screen overflow-x-clip bg-canvas text-[#323243] dark:bg-[#0B0E14] dark:text-[#E2E4ED]">
       <div className="mx-auto flex w-full gap-3 p-2.5 min-[400px]:gap-4 min-[400px]:p-3 sm:p-4 2xl:gap-6 2xl:p-6">
         <Sidebar
           activeNav={activeNav}
@@ -543,34 +554,37 @@ export default function DashboardPage() {
           isAdmin={Boolean(user?.isAdmin)}
         />
 
-        <main className="min-w-0 flex-1 space-y-4 sm:space-y-5 py-1 sm:py-4 lg:px-4 xl:px-6 3xl:px-10 3xl:space-y-6">
+        <main className="min-w-0 flex-1 space-y-4 sm:space-y-5">
           {/* Header */}
           <header className="flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="shrink-0 rounded-xl bg-ink-card p-2.5 text-neutral-400 hover:text-white lg:hidden"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-line bg-white text-muted hover:text-primary shadow-card lg:hidden dark:border-[#1F2430] dark:bg-[#141824] dark:text-[#94A3B8]"
                 title="Open menu"
                 aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <div className="hidden items-center gap-1.5 rounded-full bg-ink-card px-3 py-1.5 text-xs font-medium text-neutral-400 md:flex">
+              <div className="hidden h-10 items-center gap-2 rounded-md border border-line bg-white px-3.5 text-xs font-medium text-muted shadow-card md:flex dark:border-[#1F2430] dark:bg-[#141824] dark:text-[#94A3B8]">
                 {syncState === 'synced' ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                 ) : syncState === 'syncing' ? (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-400" />
+                  <RefreshCw className="h-4 w-4 animate-spin text-accent" />
                 ) : syncState === 'saved_locally' ? (
-                  <Cloud className="h-3.5 w-3.5 text-sky-400" />
+                  <Cloud className="h-4 w-4 text-primary" />
                 ) : (
-                  <AlertCircle className="h-3.5 w-3.5 text-rose-400" />
+                  <AlertCircle className="h-4 w-4 text-error" />
                 )}
                 <span>{syncLabel}</span>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+              {/* Theme Toggle */}
+              <ThemeToggle className="h-10 w-10 shadow-card" />
+
               {/* Notifications */}
               <div ref={bellRef} className="relative">
                 <button
@@ -578,16 +592,18 @@ export default function DashboardPage() {
                   onClick={() => setBellOpen((v) => !v)}
                   aria-expanded={bellOpen}
                   aria-label="Notifications"
-                  className={`relative rounded-xl p-2.5 transition-all duration-200 active:scale-90 ${
-                    bellOpen ? 'bg-white/10 text-white' : 'bg-ink-card text-neutral-400 hover:text-white'
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-md border border-line shadow-card transition-all duration-200 active:scale-95 dark:border-[#1F2430] ${
+                    bellOpen
+                      ? 'bg-primary-soft text-primary dark:bg-primary/20'
+                      : 'bg-white text-muted hover:text-primary dark:bg-[#141824] dark:text-[#94A3B8]'
                   }`}
                   title="Notifications"
                 >
-                  <Bell className={`h-5 w-5 transition-transform duration-200 ${bellOpen ? 'rotate-12' : ''}`} />
+                  <Bell className={`h-4 w-4 transition-transform duration-200 ${bellOpen ? 'rotate-12' : ''}`} />
                   {unreadCount + newArrivalDrives.length > 0 && (
                     <span
                       key={unreadCount + newArrivalDrives.length}
-                      className="absolute -right-1 -top-1 flex h-5 min-w-[20px] animate-badge-pop items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white"
+                      className="absolute -right-1 -top-1 flex h-5 min-w-[20px] animate-badge-pop items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white shadow-sm"
                     >
                       {unreadCount + newArrivalDrives.length}
                     </span>
@@ -628,7 +644,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleManualSync}
                 disabled={isSyncingMails}
-                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brandviolet px-2.5 py-2.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-brandviolet-hover active:scale-95 disabled:opacity-50 sm:px-4"
+                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md bg-primary px-3 sm:px-4 text-xs sm:text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-primary-hover active:scale-95 disabled:opacity-50"
                 title="Scan college Gmail for new announcements"
               >
                 <RefreshCw className={`h-4 w-4 ${isSyncingMails ? 'animate-spin' : ''}`} />
@@ -636,8 +652,8 @@ export default function DashboardPage() {
               </button>
 
               {user && (
-                <div className="flex shrink-0 items-center gap-2 rounded-xl bg-ink-card p-1.5 sm:py-1.5 sm:pl-1.5 sm:pr-3">
-                  <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold text-violet-300">
+                <div className="flex h-10 shrink-0 items-center gap-2 rounded-md border border-line bg-white px-2 shadow-card dark:border-[#1F2430] dark:bg-[#141824]">
+                  <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-xs font-semibold text-primary dark:bg-primary/20">
                     {user.picture ? (
                       <img src={user.picture} alt={user.name} className="h-full w-full object-cover" />
                     ) : (
@@ -645,8 +661,8 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <div className="hidden text-right md:block">
-                    <p className="max-w-[120px] truncate text-xs font-semibold text-white">{user.name}</p>
-                    <p className="max-w-[120px] truncate text-[10px] text-neutral-500">{user.email}</p>
+                    <p className="max-w-[120px] truncate text-xs font-semibold leading-tight text-[#323243] dark:text-[#E2E4ED]">{user.name}</p>
+                    <p className="max-w-[120px] truncate text-[10px] leading-tight text-muted dark:text-[#94A3B8]">{user.email}</p>
                   </div>
                 </div>
               )}
@@ -654,7 +670,7 @@ export default function DashboardPage() {
           </header>
 
           {syncError && (
-            <div className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs text-rose-300">
+            <div className="flex items-center gap-2 rounded-md border border-error/30 bg-error-soft px-4 py-2.5 text-xs text-error">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{syncError}</span>
             </div>
@@ -664,11 +680,11 @@ export default function DashboardPage() {
 
           {coursePref.length > 0 && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
-              <span className="text-neutral-500">Showing only:</span>
+              <span className="text-muted">Showing only:</span>
               {coursePref.map((deg) => (
                 <span
                   key={deg}
-                  className="rounded-full bg-brandviolet/15 px-2.5 py-0.5 text-[11px] font-bold text-violet-300"
+                  className="rounded-full bg-primary-soft px-2.5 py-0.5 text-[11px] font-semibold text-primary"
                 >
                   {deg}
                 </span>
@@ -677,11 +693,11 @@ export default function DashboardPage() {
                 type="button"
                 onClick={clearCoursePref}
                 title="Show all courses"
-                className="rounded-full p-1 text-neutral-500 transition-colors duration-150 hover:bg-white/5 hover:text-white"
+                className="rounded-full p-1 text-muted transition-colors duration-150 hover:bg-canvas hover:text-[#323243]"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
-              <Link href="/settings" className="font-semibold text-violet-300 hover:text-white">
+              <Link href="/settings" className="font-medium text-primary hover:text-primary-hover hover:underline">
                 Change
               </Link>
             </div>
@@ -699,8 +715,8 @@ export default function DashboardPage() {
           />
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center p-16 text-center text-neutral-500">
-              <div className="mb-3 h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-brandviolet" />
+            <div className="flex flex-col items-center justify-center p-16 text-center text-muted">
+              <div className="mb-3 h-10 w-10 animate-spin rounded-full border-2 border-line border-t-primary" />
               <span className="text-xs font-medium">Loading placement records...</span>
             </div>
           ) : drives.length === 0 ? (
@@ -727,7 +743,7 @@ export default function DashboardPage() {
                 onApply={handleApply}
               />
               {hasMore && <div ref={sentinelRef} className="flex justify-center py-6">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-brandviolet" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-primary" />
               </div>}
             </div>
           ) : (
@@ -744,7 +760,7 @@ export default function DashboardPage() {
                 />
               ))}
               {hasMore && <div ref={sentinelRef} className="flex justify-center py-6 min-[1700px]:col-span-2">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-brandviolet" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-primary" />
               </div>}
             </div>
               )}
@@ -765,8 +781,8 @@ export default function DashboardPage() {
       />
 
       {toastMessage && (
-        <div className="safe-bottom fixed bottom-4 left-4 right-4 z-50 flex animate-menu-fade items-center gap-2 rounded-xl border border-white/10 bg-ink-card px-4 py-3 text-xs font-semibold text-white shadow-menu sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm">
-          <Check className="h-4 w-4 shrink-0 text-emerald-400" />
+        <div className="safe-bottom fixed bottom-4 left-4 right-4 z-50 flex animate-menu-fade items-center gap-2 rounded-md border border-line bg-white px-4 py-3 text-xs font-semibold text-[#323243] shadow-pop sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm">
+          <Check className="h-4 w-4 shrink-0 text-success" />
           <span className="min-w-0 break-words">{toastMessage}</span>
         </div>
       )}

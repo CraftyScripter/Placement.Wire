@@ -10,29 +10,29 @@ export const metadata: Metadata = {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-7">
-      <h2 className="text-base font-bold text-white sm:text-lg">{title}</h2>
-      <div className="mt-2 space-y-2.5 text-xs leading-relaxed text-slate-400 sm:text-sm">{children}</div>
+    <section className="mt-7 rounded-lg border border-line bg-white p-4 shadow-card">
+      <h2 className="text-base font-semibold text-[#323243] sm:text-lg">{title}</h2>
+      <div className="mt-2 space-y-2.5 text-xs font-normal leading-relaxed text-muted sm:text-sm">{children}</div>
     </section>
   );
 }
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#0a0c10] text-slate-100">
+    <div className="min-h-screen bg-canvas text-[#323243]">
       <SiteHeader />
 
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6 sm:pt-10">
-        <p className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Legal</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        <p className="text-xs font-normal uppercase tracking-wider text-primary">Legal</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#323243] sm:text-4xl">
           Terms of Service
         </h1>
-        <p className="mt-2 text-xs text-slate-500">Last updated: September 2026</p>
+        <p className="mt-2 text-xs font-normal text-muted">Last updated: September 2026</p>
 
         <Section title="1. What PlacementWire is">
           <p>
             PlacementWire is independent student software built for students of St. Andrews Institute
-            of Technology and Management (SAITM), Gurgaon. It is <strong className="text-slate-200">not</strong> an
+            of Technology and Management (SAITM), Gurgaon. It is <strong className="font-semibold text-[#323243]">not</strong> an
             official product of the institute. It organizes placement announcements found in your own
             college Gmail mailbox and stores the resulting tracker in your own Google Drive.
           </p>
@@ -40,7 +40,7 @@ export default function TermsPage() {
 
         <Section title="2. Eligibility">
           <p>
-            Only students with an active <strong className="text-slate-200">@saitm.ac.in</strong> Google
+            Only students with an active <strong className="font-semibold text-[#323243]">@saitm.ac.in</strong> Google
             account may sign in. Accounts from any other domain are rejected at login.
           </p>
         </Section>
@@ -58,8 +58,8 @@ export default function TermsPage() {
         <Section title="4. Your data stays yours">
           <p>
             Placement records, notes and statuses are written to a file
-            (<code className="rounded bg-white/[0.06] px-1 py-0.5 text-slate-300">PlacementWire_Data/placements.json</code>)
-            inside <strong className="text-slate-200">your own Google Drive</strong>. PlacementWire operates
+            (<code className="rounded border border-line bg-canvas px-1 py-0.5 text-[#323243]">PlacementWire_Data/placements.json</code>)
+            inside <strong className="font-semibold text-[#323243]">your own Google Drive</strong>. PlacementWire operates
             no central database. Revoking Google access or deleting the Drive file removes your data
             from the service&apos;s reach.
           </p>
@@ -85,7 +85,7 @@ export default function TermsPage() {
         <Section title="7. Contact">
           <p>
             Questions about these terms? Reach out via the{' '}
-            <a href="/contact" className="font-semibold text-indigo-400 hover:text-indigo-300">
+            <a href="/contact" className="font-normal text-primary hover:text-accent">
               Contact Us
             </a>{' '}
             page.

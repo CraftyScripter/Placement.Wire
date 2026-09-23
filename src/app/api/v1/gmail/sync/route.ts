@@ -51,13 +51,36 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Base drives to merge into
-    const baseDrives = clientDrives.length > 0 ? clientDrives : currentFile.drives;
+    // Base drives to merge into: combine Drive storage and client drives for full awareness
+    const combinedBase = mergePlacementDrives(currentFile.drives, clientDrives).mergedDrives;
+
+    // Purge any drives that were sent/forwarded by the user or from non-college senders
+    const userEmail = session.user.email?.toLowerCase();
+    const isDirectPlacementEmail = (d: PlacementDrive) => {
+      const s = d.source?.sender?.toLowerCase() || '';
+      // If sent by user themselves, exclude
+      if (userEmail && s.includes(userEmail)) return false;
+      // Must be from placements@saitm.org or placements@saitm.ac.in
+      return s.includes('placements@saitm.org') || s.includes('placements@saitm.ac.in');
+    };
+
+    const baseDrives = combinedBase.filter(isDirectPlacementEmail);
+
+    // Collect known message IDs so we avoid re-fetching full payloads of emails already parsed
+    const knownMessageIds = new Set<string>();
+    for (const d of baseDrives) {
+      if (d.source?.gmail_message_id) {
+        knownMessageIds.add(d.source.gmail_message_id);
+      }
+      if (d.id) {
+        knownMessageIds.add(d.id);
+      }
+    }
 
     // 2. Query Gmail for placement emails
-    let newlyFetchedDrives: PlacementDrive[] = [];
+    let syncResult = { drives: [] as PlacementDrive[], hasMore: false, remainingCount: 0 };
     try {
-      newlyFetchedDrives = await syncRecentPlacementEmails(accessToken, 30);
+      syncResult = await syncRecentPlacementEmails(accessToken, 250, knownMessageIds);
     } catch (gmailErr: any) {
       console.error('Gmail API error during sync:', gmailErr);
 
@@ -88,7 +111,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Non-destructively merge without overwriting user notes or statuses
-    const mergeResult = mergePlacementDrives(baseDrives, newlyFetchedDrives);
+    const mergeResult = mergePlacementDrives(baseDrives, syncResult.drives);
 
     // 4. Update the user's Google Drive placements.json file if Drive is accessible
     const updatedFile = {
@@ -113,6 +136,8 @@ export async function POST(req: NextRequest) {
       totalDrives: mergeResult.mergedDrives.length,
       drives: updatedFile.drives,
       syncedAt: updatedFile.last_synced_at,
+      hasMore: syncResult.hasMore,
+      remainingCount: syncResult.remainingCount,
       driveAvailable,
       warning: driveWarning,
       source: 'gmail_api',

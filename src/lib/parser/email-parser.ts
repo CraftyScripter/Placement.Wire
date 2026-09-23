@@ -5,6 +5,7 @@ import {
   DriveType,
   Position,
   DeadlinePrecision,
+  sanitizePlacementDrive,
 } from '@/schemas/placement.schema';
 
 export interface RawEmailInput {
@@ -21,6 +22,14 @@ export interface RawEmailInput {
  * Checks whether an email is relevant to college placements, internships, or hackathons.
  */
 export function isPlacementEmail(subject: string, bodyText: string, sender: string = ''): boolean {
+  if (sender) {
+    const s = sender.toLowerCase();
+    const isFromPlacementCell = s.includes('placements@saitm.org') || s.includes('placements@saitm.ac.in');
+    if (!isFromPlacementCell) {
+      return false;
+    }
+  }
+
   const combined = `${subject} ${bodyText} ${sender}`.toLowerCase();
   const placementKeywords = [
     'placement',
@@ -55,6 +64,7 @@ export function extractCompany(subject: string, $: cheerio.CheerioAPI, text: str
   if (pipeParts.length >= 2) {
     const candidate = pipeParts[1];
     if (
+      candidate.length > 0 &&
       !/opportunity|placement|drive|hiring|recruitment|batch|hackathon/i.test(candidate) &&
       candidate.length < 50
     ) {
@@ -71,7 +81,31 @@ export function extractCompany(subject: string, $: cheerio.CheerioAPI, text: str
     }
   }
 
-  return pipeParts[0] || 'Unknown Company';
+  // Pattern 3: Subject keywords like "for / of / with / at / by <Company>"
+  const subjMatch = subject.match(/(?:drive\s+(?:for|of|by|at)|opportunity\s+(?:with|at|for|by)|hiring\s+(?:at|by|with|for))\s+([A-Za-z0-9&.\- ]+?)(?:\s*[\-|–—:]|\s+for\s+batch|\s+batch|\s+202[0-9]|$)/i);
+  if (subjMatch && subjMatch[1]) {
+    const cleaned = subjMatch[1].trim();
+    if (cleaned.length > 1 && cleaned.length < 50 && !/placement|campus|internship|training/i.test(cleaned)) {
+      return cleaned;
+    }
+  }
+
+  // Pattern 4: Colon or dash in subject, e.g. "Campus Drive: Capgemini" or "Placement - Cognizant"
+  const colonDashParts = subject.split(/[:\-–—]/).map((p) => p.trim());
+  if (colonDashParts.length >= 2) {
+    for (const part of colonDashParts) {
+      const candidate = part.split('|')[0].trim();
+      if (
+        candidate.length > 2 &&
+        candidate.length < 50 &&
+        !/placement|opportunity|drive|hiring|recruitment|batch|hackathon|crc|saitm|notice|reminder|update|invitation|internship/i.test(candidate)
+      ) {
+        return candidate;
+      }
+    }
+  }
+
+  return (pipeParts[0] && pipeParts[0].trim()) || (subject && subject.trim().slice(0, 50)) || 'Campus Opportunity';
 }
 
 /**
@@ -427,7 +461,7 @@ export function extractProfiles(
     const pipeParts = subject.split('|').map((p) => p.trim());
     if (pipeParts.length >= 3) {
       const candidateRole = pipeParts[2];
-      if (!/batch|eligible|opportunity|placement/i.test(candidateRole)) {
+      if (candidateRole && candidateRole.length > 0 && !/batch|eligible|opportunity|placement/i.test(candidateRole)) {
         profiles.push({
           role: candidateRole,
           ctc,
@@ -490,7 +524,7 @@ export function parsePlacementEmail(input: RawEmailInput): PlacementDrive | null
 
   const now = new Date().toISOString();
 
-  return {
+  return sanitizePlacementDrive({
     id,
     company,
     positions,
@@ -514,5 +548,5 @@ export function parsePlacementEmail(input: RawEmailInput): PlacementDrive | null
     archived: false,
     created_at: now,
     updated_at: now,
-  };
+  });
 }

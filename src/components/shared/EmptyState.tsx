@@ -18,18 +18,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   if (type === 'no_filter_results') {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] p-6 sm:p-12 text-center my-6">
-        <div className="rounded-lg bg-white/[0.03] p-3.5 text-slate-400 mb-4 border border-white/10">
+      <div className="card-base my-6 flex flex-col items-center justify-center border-dashed p-6 sm:p-12 text-center">
+        <div className="rounded-md bg-canvas p-3.5 text-muted mb-4 border border-line">
           <FilterX className="h-8 w-8 mx-auto" />
         </div>
-        <h3 className="text-base font-bold text-white">No matching placement opportunities</h3>
-        <p className="mt-1.5 max-w-sm text-xs text-slate-400">
+        <h3 className="text-lg font-semibold text-[#323243]">No matching placement opportunities</h3>
+        <p className="mt-1.5 max-w-sm text-sm font-normal text-muted">
           Try clearing your search query or changing your filters to see all available drives.
         </p>
         {onResetFilters && (
           <button
             onClick={onResetFilters}
-            className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.05] transition-colors duration-150"
+            className="btn-secondary mt-5"
           >
             Clear all filters
           </button>
@@ -39,19 +39,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.03] p-6 sm:p-12 text-center my-6">
-      <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/10 p-3.5 text-indigo-400 mb-4">
+    <div className="card-base my-6 flex flex-col items-center justify-center border-dashed p-6 sm:p-12 text-center">
+      <div className="rounded-md border border-primary/20 bg-primary-soft p-3.5 text-primary mb-4">
         <Mail className="h-8 w-8 mx-auto" />
       </div>
-      <h3 className="text-base font-bold text-white">No placement drives found</h3>
-      <p className="mt-1.5 max-w-md text-xs text-slate-400">
+      <h3 className="text-lg font-semibold text-[#323243]">No placement drives found</h3>
+      <p className="mt-1.5 max-w-md text-sm font-normal text-muted">
         PlacementWire scans your college Gmail for hiring drives and placement opportunities. Click below to start your first scan.
       </p>
       {onSyncMails && (
         <button
           onClick={onSyncMails}
           disabled={isSyncingMails}
-          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-indigo-500 active:scale-95 disabled:opacity-50 transition-colors duration-150"
+          className="btn-primary mt-5"
         >
           <RefreshCw className={`h-4 w-4 ${isSyncingMails ? 'animate-spin' : ''}`} />
           <span>{isSyncingMails ? 'Scanning Mailbox...' : 'Sync Placement Mails Now'}</span>

@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 import './globals.css';
 import { site } from '@/config/site';
 import { env } from '@/config/env';
 import { AnalyticsBeacon } from '@/components/analytics/AnalyticsBeacon';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
 
-const plusJakarta = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-outfit',
 });
 
 const APP_URL = env.APP_URL;
@@ -40,17 +41,17 @@ export const metadata: Metadata = {
     siteName: 'PlacementWire',
     title: 'PlacementWire — Your Placement Emails. Organized.',
     description: site.description,
-    images: [{ url: '/icon_dark.png', width: 512, height: 512, alt: 'PlacementWire' }],
+    images: [{ url: '/icon_light.png', width: 512, height: 512, alt: 'PlacementWire' }],
   },
   twitter: {
     card: 'summary',
     title: 'PlacementWire — Your Placement Emails. Organized.',
     description: site.description,
-    images: ['/icon_dark.png'],
+    images: ['/icon_light.png'],
   },
   icons: {
-    icon: '/icon_dark.png',
-    apple: '/icon_dark.png',
+    icon: '/icon_light.png',
+    apple: '/icon_light.png',
   },
 };
 
@@ -60,10 +61,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${plusJakarta.variable}`}>
-      <body className="min-h-screen bg-[#0a0c10] text-slate-100 font-sans selection:bg-indigo-500/30 selection:text-indigo-200 antialiased">
+    <html lang="en" className={outfit.variable} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var t = localStorage.getItem('pw_theme');
+                  var m = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (t === 'dark' || ((!t || t === 'system') && m)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-canvas font-sans text-inktext antialiased selection:bg-primary/20 dark:bg-[#0B0E14] dark:text-[#E2E4ED]">
         <AnalyticsBeacon />
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

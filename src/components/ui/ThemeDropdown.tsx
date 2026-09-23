@@ -74,19 +74,19 @@ export const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="inline-flex w-full max-w-full items-center justify-between gap-2 rounded-full border border-white/10 bg-ink-input px-3.5 py-2 text-xs font-medium text-neutral-200 transition-colors duration-150 hover:bg-white/10 hover:text-white focus:border-brandviolet focus:outline-none"
+        className="inline-flex h-10 w-full max-w-full items-center justify-between gap-2 rounded-md border border-line bg-white px-3.5 py-2 text-sm font-normal text-[#323243] shadow-card transition-colors duration-150 hover:border-primary focus:border-primary focus:outline-none dark:border-[#1F2430] dark:bg-[#141824] dark:text-[#E2E4ED]"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
         <span className="flex min-w-0 items-center gap-1.5 truncate">
-          {PrefixIcon && <PrefixIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
-          {label && <span className="text-slate-400 font-normal">{label}</span>}
-          <span className="font-semibold text-white truncate">
+          {PrefixIcon && <PrefixIcon className="h-3.5 w-3.5 text-muted shrink-0 dark:text-[#94A3B8]" />}
+          {label && <span className="text-muted font-normal dark:text-[#94A3B8]">{label}</span>}
+          <span className="font-medium text-[#323243] truncate dark:text-[#E2E4ED]">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-150 ${
+          className={`h-3.5 w-3.5 text-muted shrink-0 transition-transform duration-150 dark:text-[#94A3B8] ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -102,7 +102,7 @@ export const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
                 ? { top: pos.top, left: pos.left }
                 : { top: -9999, left: -9999, visibility: 'hidden' }
             }
-            className={`fixed z-[100] min-w-[160px] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-ink-card p-1.5 shadow-menu animate-menu-fade focus:outline-none ${menuClassName}`}
+            className={`fixed z-[100] min-w-[160px] max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-white p-1.5 shadow-pop animate-menu-fade focus:outline-none dark:border-[#1F2430] dark:bg-[#141824] ${menuClassName}`}
           >
             {options.map((option) => {
               const isSelected = option.value === value;
@@ -118,17 +118,17 @@ export const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
                     onChange(option.value);
                     setIsOpen(false);
                   }}
-                  className={`flex items-center justify-between w-full rounded-md px-2.5 py-1.5 text-left text-xs transition-colors duration-150 ${
+                  className={`flex items-center justify-between w-full rounded-md px-2.5 py-2 text-left text-sm transition-colors duration-150 ${
                     isSelected
-                      ? 'bg-brandviolet/20 text-violet-200 font-semibold'
-                      : 'text-slate-300 hover:bg-white/[0.05] hover:text-white'
+                      ? 'bg-primary-soft text-primary font-medium dark:bg-primary/20'
+                      : 'text-[#323243] hover:bg-canvas font-normal dark:text-[#CBD5E1] dark:hover:bg-[#0B0E14]'
                   }`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     {Icon && (
                       <Icon
                         className={`h-3.5 w-3.5 shrink-0 ${
-                          isSelected ? 'text-violet-300' : 'text-slate-400'
+                          isSelected ? 'text-primary' : 'text-muted dark:text-[#94A3B8]'
                         }`}
                       />
                     )}
@@ -136,11 +136,11 @@ export const ThemeDropdown: React.FC<ThemeDropdownProps> = ({
                   </span>
                   <span className="flex items-center gap-1.5 pl-2 shrink-0">
                     {option.badge && (
-                      <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-mono text-slate-400">
+                      <span className="rounded bg-canvas px-1.5 py-0.5 text-[10px] font-mono text-muted dark:bg-[#0B0E14] dark:text-[#94A3B8]">
                         {option.badge}
                       </span>
                     )}
-                    {isSelected && <Check className="h-3.5 w-3.5 text-violet-300" />}
+                    {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
                   </span>
                 </button>
               );

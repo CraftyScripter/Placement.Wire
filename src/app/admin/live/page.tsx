@@ -1,7 +1,19 @@
 'use client';
 
+import React from 'react';
+import {
+  Activity,
+  Compass,
+  Globe2,
+  Laptop,
+  MapPin,
+  MousePointerClick,
+  Radio,
+  User,
+  Users,
+} from 'lucide-react';
 import { useAdminOverview } from '@/hooks/use-admin-overview';
-import { Card, CardTitle, fmtTime } from '@/components/admin/ui';
+import { Card, CardTitle, fmtNumber, fmtTime } from '@/components/admin/ui';
 import type { Visitor } from '@/lib/analytics/store';
 
 function locOf(v: Visitor): string {
@@ -9,26 +21,82 @@ function locOf(v: Visitor): string {
   return parts.length ? parts.join(', ') : '—';
 }
 
-function Row({ v, live }: { v: Visitor; live: boolean }) {
+function LiveTableRow({ v, isLive }: { v: Visitor; isLive: boolean }) {
+  const email = v.email || `Anonymous (${v.key.slice(5, 11)})`;
+  const isAnon = !v.email;
+
   return (
-    <tr className="border-t border-white/5 hover:bg-white/[0.02]">
-      <td className="px-2 py-2">
-        <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-400" />
-        <span className="font-semibold text-white">{v.email || `anonymous · ${v.key.slice(5, 11)}`}</span>
-        {v.isAdmin && (
-          <span className="ml-1.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
-            ADMIN
+    <tr className="border-b border-slate-100 transition-colors duration-150 hover:bg-slate-50/80 dark:border-[#1F2430] dark:hover:bg-[#1A202E]/60">
+      {/* Student / Visitor */}
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+              isLive
+                ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                : 'bg-slate-100 text-slate-500 dark:bg-[#1F2430] dark:text-[#94A3B8]'
+            }`}
+          >
+            {isAnon ? <User className="h-4 w-4" /> : email[0].toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate font-semibold text-slate-800 dark:text-[#E2E4ED]" title={email}>
+                {email}
+              </span>
+              {v.isAdmin && (
+                <span className="rounded-full bg-amber-500/10 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                  ADMIN
+                </span>
+              )}
+            </div>
+            <p className="truncate text-[11px] text-slate-400 dark:text-[#64748B]">
+              {[v.name, v.device].filter(Boolean).join(' · ') || 'Web Browser'}
+            </p>
+          </div>
+        </div>
+      </td>
+
+      {/* Current Page */}
+      <td className="px-4 py-3">
+        {v.lastPath ? (
+          <span className="inline-flex max-w-[200px] truncate items-center gap-1 rounded-lg border border-slate-200/80 bg-slate-50 px-2 py-1 font-mono text-[11px] font-medium text-slate-700 dark:border-[#1F2430] dark:bg-[#0B0E14] dark:text-slate-300">
+            <MousePointerClick className="h-3 w-3 shrink-0 text-primary" />
+            <span className="truncate">{v.lastPath}</span>
+          </span>
+        ) : (
+          <span className="text-slate-400">—</span>
+        )}
+      </td>
+
+      {/* Location */}
+      <td className="px-4 py-3 text-[11px] text-slate-600 dark:text-[#94A3B8]">
+        <span className="inline-flex items-center gap-1">
+          <MapPin className="h-3 w-3 shrink-0 text-slate-400" />
+          <span>{locOf(v)}</span>
+        </span>
+      </td>
+
+      {/* IP */}
+      <td className="px-4 py-3 font-mono text-[11px] text-slate-500 dark:text-[#94A3B8]">
+        {v.lastIp || '—'}
+      </td>
+
+      {/* Activity Status */}
+      <td className="whitespace-nowrap px-4 py-3">
+        {isLive ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            Active Now
+          </span>
+        ) : (
+          <span className="text-[11px] text-slate-400 dark:text-[#7D889E]">
+            {fmtTime(v.lastActive)}
           </span>
         )}
-        <p className="pl-3.5 text-[11px] text-neutral-500">{v.name || v.device}</p>
-      </td>
-      <td className="max-w-[140px] truncate px-2 py-2 font-mono text-[11px] text-neutral-400">
-        {v.lastPath || '—'}
-      </td>
-      <td className="px-2 py-2 text-neutral-400">{locOf(v)}</td>
-      <td className="px-2 py-2 font-mono text-[11px] text-neutral-500">{v.lastIp || '—'}</td>
-      <td className="whitespace-nowrap px-2 py-2 text-neutral-400">
-        {live ? 'now' : fmtTime(v.lastActive)}
       </td>
     </tr>
   );
@@ -36,40 +104,67 @@ function Row({ v, live }: { v: Visitor; live: boolean }) {
 
 export default function AdminLivePage() {
   const { data, loading } = useAdminOverview();
-  const liveKeys = new Set((data?.liveNow || []).map((v) => v.key));
+  const liveList = data?.liveNow || [];
+  const liveKeys = new Set(liveList.map((v) => v.key));
   const recent = (data?.visitors || []).filter((v) => !liveKeys.has(v.key)).slice(0, 30);
 
   return (
-    <div className="space-y-4">
-      <header>
-        <h1 className="text-xl font-extrabold text-white sm:text-2xl">Live Now</h1>
-        <p className="text-xs text-neutral-500">
-          Visitors active in the last 5 minutes (tab-open heartbeat). Sessions are stateless JWTs,
-          so this is presence — not a session list.
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+              Live Presence & Active Heartbeats
+            </h1>
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              {liveList.length} Online Now
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
+            Students currently browsing Placement.Wire with an active browser tab (synced every 2 minutes).
+          </p>
+        </div>
       </header>
 
-      <Card>
-        <CardTitle>Online now ({data?.liveNow.length ?? (loading ? '…' : 0)})</CardTitle>
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-xs">
+      {/* Online Now Table */}
+      <Card noPadding>
+        <div className="flex items-center justify-between border-b border-slate-200/80 p-4 dark:border-[#1F2430]">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+              <Radio className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-800 dark:text-[#E2E4ED]">
+                Currently Active Students ({liveList.length})
+              </h2>
+              <p className="text-[11px] text-slate-400 dark:text-[#64748B]">
+                Active within the last 5 minutes
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px] text-left text-xs">
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-neutral-500">
-                <th className="px-2 py-2">Who</th>
-                <th className="px-2 py-2">On page</th>
-                <th className="px-2 py-2">Location</th>
-                <th className="px-2 py-2">IP</th>
-                <th className="px-2 py-2">Active</th>
+              <tr className="border-b border-slate-200/80 bg-slate-50/75 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-[#1F2430] dark:bg-[#0F131D] dark:text-[#94A3B8]">
+                <th className="px-4 py-3">Student / Device</th>
+                <th className="px-4 py-3">Active Page</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">IP Address</th>
+                <th className="px-4 py-3">Presence Status</th>
               </tr>
             </thead>
             <tbody>
-              {(data?.liveNow || []).map((v) => (
-                <Row key={v.key} v={v} live />
+              {liveList.map((v) => (
+                <LiveTableRow key={v.key} v={v} isLive />
               ))}
-              {(data?.liveNow || []).length === 0 && (
+              {liveList.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-2 py-6 text-center text-neutral-500">
-                    {loading ? 'Loading...' : 'Nobody online right now.'}
+                  <td colSpan={5} className="px-4 py-12 text-center text-xs text-slate-400 dark:text-slate-500">
+                    {loading ? 'Detecting active users...' : 'No active students online at this exact moment.'}
                   </td>
                 </tr>
               )}
@@ -78,18 +173,43 @@ export default function AdminLivePage() {
         </div>
       </Card>
 
-      <Card>
-        <CardTitle>Recently active</CardTitle>
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-xs">
+      {/* Recently Active Table */}
+      <Card noPadding>
+        <div className="flex items-center justify-between border-b border-slate-200/80 p-4 dark:border-[#1F2430]">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-[#1F2430] dark:text-[#94A3B8]">
+              <Activity className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-800 dark:text-[#E2E4ED]">
+                Recently Active Visitors
+              </h2>
+              <p className="text-[11px] text-slate-400 dark:text-[#64748B]">
+                Last 30 students who opened the portal
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px] text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200/80 bg-slate-50/75 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-[#1F2430] dark:bg-[#0F131D] dark:text-[#94A3B8]">
+                <th className="px-4 py-3">Student / Device</th>
+                <th className="px-4 py-3">Last Opened Page</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">IP Address</th>
+                <th className="px-4 py-3">Last Active</th>
+              </tr>
+            </thead>
             <tbody>
               {recent.map((v) => (
-                <Row key={v.key} v={v} live={false} />
+                <LiveTableRow key={v.key} v={v} isLive={false} />
               ))}
               {recent.length === 0 && (
                 <tr>
-                  <td className="px-2 py-6 text-center text-neutral-500">
-                    {loading ? 'Loading...' : 'No recent visitors.'}
+                  <td colSpan={5} className="px-4 py-12 text-center text-xs text-slate-400 dark:text-slate-500">
+                    {loading ? 'Loading...' : 'No recent visitor activity recorded.'}
                   </td>
                 </tr>
               )}

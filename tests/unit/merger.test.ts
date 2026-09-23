@@ -42,4 +42,57 @@ describe('Placement Data Merger Engine', () => {
     expect(merged.user_notes).toBe('Cleared technical round 1 on 20 Sept.');
     expect(merged.starred).toBe(true);
   });
+
+  it('should deduplicate reminder emails with the same gmail_thread_id', () => {
+    const rgf = parsePlacementEmail(FIXTURE_RGF_INDIA)!;
+    // Reminder email with a different message ID but SAME thread ID
+    const reminder = {
+      ...rgf,
+      id: 'gmail_msg_different_id_for_reminder',
+      source: {
+        ...rgf.source,
+        gmail_message_id: 'msg_reminder_123',
+        subject: 'Reminder: Final Placement Opportunity | RGF India',
+      },
+    };
+
+    const result = mergePlacementDrives([rgf], [reminder]);
+    expect(result.addedCount).toBe(0);
+    expect(result.updatedCount).toBe(1);
+    expect(result.mergedDrives.length).toBe(1);
+  });
+
+  it('should deduplicate emails for the same company in the same placement season', () => {
+    const rgf = parsePlacementEmail(FIXTURE_RGF_INDIA)!;
+    // Another email for RGF India with different ID and subject
+    const rgfUpdate = {
+      ...rgf,
+      id: 'gmail_msg_another_id',
+      company: 'RGF India Pvt Ltd',
+      source: {
+        ...rgf.source,
+        gmail_message_id: 'msg_update_456',
+        subject: 'RGF India: Shortlist & Interview Process',
+      },
+    };
+
+    const result = mergePlacementDrives([rgf], [rgfUpdate]);
+    expect(result.addedCount).toBe(0);
+    expect(result.updatedCount).toBe(1);
+    expect(result.mergedDrives.length).toBe(1);
+  });
+
+  it('should self-deduplicate any existing duplicates in existingDrives', () => {
+    const rgf1 = parsePlacementEmail(FIXTURE_RGF_INDIA)!;
+    const rgfDuplicate = {
+      ...rgf1,
+      id: 'duplicate_id_99',
+      company: 'RGF India',
+    };
+
+    // Both exist in existingDrives
+    const result = mergePlacementDrives([rgf1, rgfDuplicate], []);
+    expect(result.mergedDrives.length).toBe(1);
+  });
 });
+

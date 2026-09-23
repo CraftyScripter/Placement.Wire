@@ -125,4 +125,30 @@ describe('Email Parser Pipeline Fixture Tests', () => {
     const parsed = parsePlacementEmail(spamEmail);
     expect(parsed).toBeNull();
   });
+
+  it('Should reject emails sent or forwarded from personal/user email accounts', () => {
+    const forwardedEmail = {
+      id: 'fwd_123',
+      subject: 'Fwd: Final Placement Opportunity | RGF India',
+      sender: 'myemail@gmail.com', // user's personal email
+      bodyText: 'Hey check this placement drive with RGF India!',
+    };
+
+    const parsed = parsePlacementEmail(forwardedEmail);
+    expect(parsed).toBeNull();
+  });
+
+  it('Should strictly accept emails directly from placements@saitm.org', () => {
+    const directPlacementEmail = {
+      id: 'valid_saitm_001',
+      subject: 'Campus Placement Drive: Capgemini | Batch 2026',
+      sender: 'placements@saitm.org',
+      bodyText: 'Dear Students, Greetings from T&P cell! Capgemini drive is scheduled.',
+    };
+
+    const parsed = parsePlacementEmail(directPlacementEmail);
+    expect(parsed).not.toBeNull();
+    expect(parsed?.company).toBe('Capgemini');
+  });
 });
+

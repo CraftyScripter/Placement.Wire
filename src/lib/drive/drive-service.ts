@@ -4,6 +4,7 @@ import {
   PlacementFile,
   PlacementFileSchema,
   createEmptyPlacementFile,
+  sanitizePlacementDrive,
 } from '@/schemas/placement.schema';
 
 const FOLDER_NAME = 'PlacementWire_Data';
@@ -161,9 +162,30 @@ export async function fetchPlacementsJson(
     rawJson = createEmptyPlacementFile();
   }
 
-  // Validate with Zod
-  const parsed = PlacementFileSchema.safeParse(rawJson);
-  const validData = parsed.success ? parsed.data : createEmptyPlacementFile();
+  // Resilient parsing: don't throw away valid records if individual fields need sanitization
+  let validData = createEmptyPlacementFile();
+  if (rawJson && typeof rawJson === 'object') {
+    const rawDrives = Array.isArray(rawJson.drives) ? rawJson.drives : [];
+    const sanitizedDrives = rawDrives.map(sanitizePlacementDrive);
+
+    const parsed = PlacementFileSchema.safeParse({
+      ...rawJson,
+      drives: sanitizedDrives,
+    });
+
+    if (parsed.success) {
+      validData = parsed.data;
+    } else {
+      console.warn('Placement file validation warning, recovered valid records with fallback structure');
+      validData = {
+        app: 'PlacementWire',
+        version: '1.0',
+        last_synced_at: typeof rawJson.last_synced_at === 'string' ? rawJson.last_synced_at : new Date().toISOString(),
+        revision: typeof rawJson.revision === 'number' ? rawJson.revision : 1,
+        drives: sanitizedDrives,
+      };
+    }
+  }
 
   return {
     data: validData,
@@ -181,9 +203,13 @@ export async function updatePlacementsJson(
   const drive = getDriveClient(accessToken);
   let fileInfo = await findPlacementsFile(drive);
 
+  // Sanitize all drives before persisting to guarantee zero schema validation errors
+  const sanitizedDrives = (Array.isArray(updatedData?.drives) ? updatedData.drives : []).map(sanitizePlacementDrive);
+
   // Validate incoming data
   const validated = PlacementFileSchema.parse({
     ...updatedData,
+    drives: sanitizedDrives,
     last_synced_at: new Date().toISOString(),
     revision: (updatedData.revision || 1) + 1,
   });

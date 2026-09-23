@@ -13,6 +13,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -32,9 +33,9 @@ function LoginContent() {
 
   if (authLoading || isAuthenticated) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0c10] p-4 text-slate-100">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mb-3" />
-        <p className="text-xs text-slate-400">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-canvas p-4 text-[#323243]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-xs font-normal text-muted">
           {isAuthenticated ? 'Already signed in. Redirecting to dashboard...' : 'Checking student session...'}
         </p>
       </div>
@@ -71,77 +72,88 @@ function LoginContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center overflow-x-clip bg-[#0a0c10] p-4 text-slate-100">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-x-clip bg-canvas p-4 text-[#323243]">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md space-y-5 sm:space-y-6">
         <div className="text-center">
           <Link href="/" className="inline-block" aria-label="Back to homepage">
+            <Image
+              src="/icon_light.png"
+              alt="PlacementWire Logo"
+              width={52}
+              height={66}
+              className="h-12 sm:h-14 w-auto object-contain mx-auto dark:hidden"
+              priority
+            />
             <Image
               src="/icon_dark.png"
               alt="PlacementWire Logo"
               width={52}
               height={66}
-              className="h-12 sm:h-14 w-auto object-contain mx-auto"
+              className="hidden h-12 sm:h-14 w-auto object-contain mx-auto dark:block"
               priority
             />
-            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Placement<span className="text-indigo-400">Wire</span>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-[#323243] sm:text-3xl">
+              Placement<span className="text-primary">Wire</span>
             </h1>
           </Link>
-          <p className="mt-1 px-2 text-[11px] sm:text-xs text-slate-400">Student Portal • St. Andrews Institute of Technology & Management</p>
+          <p className="mt-1 px-2 text-[11px] sm:text-xs font-normal text-muted">Student Portal • St. Andrews Institute of Technology & Management</p>
         </div>
 
         {errorParam === 'domain_unauthorized' && (
-          <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-rose-200">
-              <ShieldAlert className="h-4 w-4 shrink-0 text-rose-400" />
+          <div className="rounded-lg border border-error/30 bg-error-soft p-4 text-xs text-error space-y-2">
+            <div className="flex items-center gap-2 font-semibold text-error">
+              <ShieldAlert className="h-4 w-4 shrink-0" />
               <span>Ineligible Email Domain</span>
             </div>
-            <p>
+            <p className="font-normal">
               {attemptedEmail ? (
                 <span>
-                  The account <strong className="text-white">{attemptedEmail}</strong> is not permitted.
+                  The account <strong className="font-semibold text-[#323243]">{attemptedEmail}</strong> is not permitted.
                 </span>
               ) : (
                 'Your Google account is not permitted.'
               )}
             </p>
-            <p className="text-[11px] text-rose-300/80">
+            <p className="text-[11px] font-normal opacity-80">
               Only verified SAITM accounts ending in <strong>@saitm.ac.in</strong> can sign in.
             </p>
           </div>
         )}
 
         {errorParam && errorParam !== 'domain_unauthorized' && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-300">
-            <div className="flex items-center gap-2 font-bold text-amber-200">
-              <ShieldAlert className="h-4 w-4 shrink-0 text-amber-400" />
+          <div className="rounded-lg border border-accent/40 bg-accent-soft p-4 text-xs text-[#323243]">
+            <div className="flex items-center gap-2 font-semibold">
+              <ShieldAlert className="h-4 w-4 shrink-0 text-accent" />
               <span>Authentication Notice</span>
             </div>
-            <p className="mt-1">
+            <p className="mt-1 font-normal">
               Google authentication could not be completed ({errorParam}). Please try again.
             </p>
           </div>
         )}
 
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-5 sm:p-8 space-y-6">
+        <div className="rounded-lg border border-line bg-white p-4 shadow-card sm:p-8 space-y-6">
           <div className="space-y-4">
-            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3.5 text-xs text-slate-300">
-              <div className="flex items-center gap-1.5 font-semibold text-slate-200">
-                <ShieldCheck className="h-4 w-4 text-indigo-400" />
+            <div className="rounded-md border border-line bg-canvas p-3.5 text-xs text-muted">
+              <div className="flex items-center gap-1.5 font-semibold text-[#323243]">
+                <ShieldCheck className="h-4 w-4 text-primary" />
                 <span>Who can sign in</span>
               </div>
-              <p className="mt-1 text-[11px] text-slate-400">
-                Only students with an active <code className="text-slate-300 bg-white/[0.06] px-1 py-0.5 rounded">@saitm.ac.in</code> Google account.
+              <p className="mt-1 text-[11px] font-normal text-muted">
+                Only students with an active <code className="text-[#323243] bg-white border border-line px-1 py-0.5 rounded">@saitm.ac.in</code> Google account.
               </p>
             </div>
 
             <button
               onClick={handleGoogleLogin}
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-3 rounded-lg bg-white px-4 py-3 text-sm font-bold text-slate-900 hover:bg-slate-100 active:scale-95 disabled:opacity-50 transition-colors duration-150"
+              className="w-full flex h-11 items-center justify-center gap-3 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 transition-all duration-150"
             >
               {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
               ) : (
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -166,35 +178,35 @@ function LoginContent() {
             </button>
           </div>
 
-          <div className="pt-2 border-t border-white/10 text-center">
-            <span className="text-[10px] text-slate-500 block mb-2 font-medium">Development & Local Testing</span>
+          <div className="pt-2 border-t border-line text-center">
+            <span className="text-[10px] text-muted block mb-2 font-normal">Development & Local Testing</span>
             <button
               onClick={handleMockLogin}
               disabled={mockLoading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/[0.05] active:scale-95 transition-colors duration-150"
+              className="w-full inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 py-2 text-xs font-medium text-primary hover:border-primary hover:bg-canvas active:scale-[0.98] transition-all duration-150 shadow-card"
             >
               {mockLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <CheckCircle className="h-3.5 w-3.5 text-slate-400" />
+                <CheckCircle className="h-3.5 w-3.5" />
               )}
               <span>Dev Login (Demo Student @saitm.ac.in)</span>
             </button>
           </div>
 
-          <div className="space-y-2 pt-1 text-[11px] text-slate-500">
+          <div className="space-y-2 pt-1 text-[11px] font-normal text-muted">
             <div className="flex items-start gap-2">
-              <HardDrive className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <HardDrive className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted" />
               <span>Records saved in your personal Google Drive.</span>
             </div>
             <div className="flex items-start gap-2">
-              <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted" />
               <span>Read-only Gmail access. Personal emails are never indexed.</span>
             </div>
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-slate-500">
+        <p className="text-center text-[11px] font-normal text-muted">
           Independent student software for SAITM Gurgaon
         </p>
       </div>
@@ -206,8 +218,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#0a0c10] text-slate-400">
-          <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+        <div className="flex min-h-screen items-center justify-center bg-canvas text-muted">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       }
     >
